@@ -12,8 +12,8 @@ Detailed (but Visual Studio specific) instructions coming soon...
 - The animation will start playing. You may press certain keys on your keyboard to get actions to happen. Commands listed below.
 
 # Commands
-L -- makes drawing machine arms invisible   
-P -- takes a photo of your pattern in its current state    
-B -- changes background color (caution, some settings contain flashing colors!)    
-Down Arrow -- allows you to cycle between color patterns in the middle of animation    
-Escape -- close window    
+L -- makes drawing machine arms invisible   \
+P -- takes a photo of your pattern in its current state   \
+B -- changes background color (caution, some settings contain flashing colors!)   \
+Down Arrow -- allows you to cycle between color patterns in the middle of animation   \
+Escape -- close window   \
