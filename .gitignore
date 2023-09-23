@@ -1,0 +1,14 @@
+# visual studio
+*.sln
+*.vcxproj
+*.vcxproj.*
+.vs/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+#SFML
+External Libraries/
