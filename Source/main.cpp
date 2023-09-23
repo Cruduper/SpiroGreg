@@ -136,7 +136,7 @@ void main()
 			sf::Image screenshot = texture.copyToImage();
 			//screenshot = window.capture(); //capture() is deprecated
 			std::stringstream filename;
-			filename << "Spirograph_" << screenshotNum << ".png";
+			filename << "SpiroGreg_" << screenshotNum << ".png";
 			screenshot.saveToFile(filename.str());
 			takeScreenShot = false;
 		}
