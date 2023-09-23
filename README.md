@@ -18,11 +18,11 @@ Detailed (but Visual Studio specific) instructions coming soon...
 - The animation will start playing. You may press certain keys on your keyboard to get actions to happen. Commands listed below.
 
 ### ⌨️ Runtime Keyboard Controls
-L key -- makes drawing machine arms invisible   \
-P key -- takes a photo of your pattern in its current state   \
-B key -- changes background color (caution, some settings contain flashing colors!)   \
-Down Arrow -- allows you to cycle between color patterns in the middle of animation   \
-Escape -- close window   \
+L key — makes drawing machine arms invisible   \
+P key — takes a photo of your pattern in its current state   \
+B key — changes background color (caution, some settings contain flashing colors!)   \
+Down Arrow  — allows you to cycle between color patterns in the middle of animation   \
+Esc — close window   \
 
 ### 🦠 Known Bugs OR Issues
 - "secondsToRepeat" seems to be calculated incorrectly, and should have a different name when displayed to the user
@@ -30,8 +30,7 @@ Escape -- close window   \
 - The inputs for each arm should come from a UI, not command line
 - User should be able to restart a new drawing without restarting the program
 
-## ⚖️ License
-
+### ⚖️ License
 [MIT](https://opensource.org/licenses/MIT)    
 
 ```
