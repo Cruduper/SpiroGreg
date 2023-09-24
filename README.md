@@ -1,7 +1,9 @@
 # SpiroGreg
 
 ### 📖 Description
-SpiroGreg is an app I worked on previously before I learned git, while learning SFML and C++. SpiroGreg is a spirograph-like drawing program that allows you to attach several arms that rotate in a circle end to end. Each arm has a different user-definable length and angular velocity, and the outside edge of the final arm draws it's path onto the screen. The end result is a spirograph-like pattern, which you can augment with different color schemes or take screenshots of. This should also give some intuition into how Fourier Theorem (https://www.mtsu.edu/faculty/wroberts/teaching/fourier_4.php) works if you've taken Differential Equations in school, i.e. how complex patterns can arise out of simple periodic waveforms. 
+SpiroGreg is a spirograph-like drawing program that allows you to attach several arms that rotate in a circle end to end. Each arm has a different user-definable length and angular velocity, and the outside edge of the final arm draws it's path onto the screen. The end result is a spirograph-like pattern, which you can augment with different color schemes or take screenshots of. This should also give some intuition into how Fourier Theorem (https://www.mtsu.edu/faculty/wroberts/teaching/fourier_4.php) works if you've taken Differential Equations in school, i.e. how complex patterns can arise out of simple periodic waveforms.
+
+SpiroGreg is an app I made years ago before I learned git, while learning SFML and C++. It was originally created using SFML 2.4, but I have updated it to use the latest version. I will also be making improvements to both code cleanliness (not great currently) and user friendliness. 
 
 ### 🛠 Technologies Used
 - C++
