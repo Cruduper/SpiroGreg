@@ -72,7 +72,6 @@ void main()
 	while (window.isOpen()){
 		sf::Event Event;
 
-		//Event loop
 		while (window.pollEvent(Event))
 		{
 			switch (Event.type){
@@ -120,7 +119,6 @@ void main()
 			} else {
 				showLines = false;
 			}
-
 		//}
 
 
@@ -236,7 +234,9 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 float GetSecsToRepeat(int numArms, std::vector<Arm> arms, std::vector<float> armSpeeds)
 {
 	for (int i = 0; i < numArms; i++)
+	{
 		armSpeeds.push_back(arms[i].getAngularV_Deg());
+	}
 
 	if (armSpeeds.size() > 1)
 		return (360 / GCD(armSpeeds));
