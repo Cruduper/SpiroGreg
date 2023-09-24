@@ -1,6 +1,6 @@
 # SpiroGreg
 <div align="center">
-  <img style="margin:auto;width:400px;" src="ExampleScreenshot.jpg" alt="image of final result"/>
+  <img style="margin:auto;width:500px;" src="ExampleScreenshot.jpg" alt="image of final result"/>
   <p>example exported screenshot<p>
 </div>
 
