@@ -25,7 +25,8 @@ using std::endl;
 
 
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
-float GetSecsToRepeat(int numArms, std::vector<Arm> arms, std::vector<float> armSpeeds);
+float GetSecsToRepeat(std::vector<float> armSpeeds);
+std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms);
 void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &lines, std::vector<Arm> &arms, sf::RenderWindow &window);
 void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms, float timeRunning);
 void ColorAlgorithm(std::vector<sf::Vertex> &Vlines, std::string algoName, float timeRunning, float repeatSecs);
@@ -61,7 +62,8 @@ void main()
 	bool showLines = true;
 	bool takeScreenShot = false;
 
-	secsToRepeat = GetSecsToRepeat(numArms, arms, armSpeeds);
+	armSpeeds = SetArmSpeeds(numArms, arms);
+	secsToRepeat = GetSecsToRepeat(armSpeeds);
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
 	InitializeLineStrip(screenDimensions, lines, arms, window); //creates first arm of spirograph
 	//window.display();////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,8 +72,8 @@ void main()
 	sf::Time timeRunning, refreshTime;
 
 	while (window.isOpen()){
+		
 		sf::Event Event;
-
 		while (window.pollEvent(Event))
 		{
 			switch (Event.type){
@@ -229,19 +231,23 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 		colorAlgo = "Invisible";
 }
 
-
-
-float GetSecsToRepeat(int numArms, std::vector<Arm> arms, std::vector<float> armSpeeds)
-{
+std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms) {
+	std::vector<float> armSpeeds;
+	
 	for (int i = 0; i < numArms; i++)
 	{
 		armSpeeds.push_back(arms[i].getAngularV_Deg());
 	}
+	return armSpeeds;
+}
 
-	if (armSpeeds.size() > 1)
+float GetSecsToRepeat(std::vector<float> armSpeeds)
+{
+	if (armSpeeds.size() > 1) {
 		return (360 / GCD(armSpeeds));
-	else
+	} else {
 		return (abs(360 / armSpeeds[0])); //must use abs() because neg. speed will otherwise cause neg. # of seconds
+	}
 }
 
 
@@ -315,13 +321,13 @@ void ColorAlgorithm(std::vector<sf::Vertex> &Vlines, std::string algoName, float
 
 		/*********
 
-		example:
-
+			//template for equation that appears in all the if...else if branches:
 		red = $starting_rbg_value$ +/- ( $rgb_change_amount$ * ( (percentComplete % 1000) / $interval_between_different_colors$) );
-		i.e.
+		
+			//example:
 		red = 255 - (127 * ( (percentComplete % 1000) / 333.0f ) );		//pnk to purp
 
-		$starting_rbg_value$	  = 255			//this should be the value that red ended at in an earlier if statement (IF one exists)
+		$starting_rbg_value$	  = 255			//should be the value that red ended at in the previous statement in the if...else (unless there's no previous )
 		$rgb_change_amount$		  =	127			//red drops by 127 from the starting amount of 255 over an interval of 333 (or 1/3 a pattern rotation)
 		$interval_between_colors$ = 333			//This is out of a possible 1000. So 333 means the color will change from pink to purple as spirograph
 		//does 1/3 of a full pattern
