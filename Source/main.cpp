@@ -17,7 +17,7 @@ https://www.khanacademy.org/computing/computer-science/cryptography/modarithmeti
 #include <iostream>
 #include <vector>
 #include "Arm.h"
-
+#include "Inflection.h"
 
 using std::cout;
 using std::endl;
