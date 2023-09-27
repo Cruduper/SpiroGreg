@@ -18,6 +18,7 @@ https://www.khanacademy.org/computing/computer-science/cryptography/modarithmeti
 #include <vector>
 #include "Arm.h"
 
+
 using std::cout;
 using std::endl;
 
@@ -25,6 +26,7 @@ using std::endl;
 
 
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
+void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints);
 float GetSecsToRepeat(std::vector<float> armSpeeds);
 std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms);
 void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &lines, std::vector<Arm> &arms, sf::RenderWindow &window);
@@ -34,8 +36,8 @@ void setBgrdColor(int &bgColorScheme, sf::Color &bgColor, float timeRunning);
 void setColorAlgo(std::string &colorAlgo);
 
 float EuclideanAlgo(float num, float denom);
-float GCD(std::vector<float> numbers);
-
+int GCD(std::vector<float> numbers);
+int LCM(std::vector<float> numbers);
 
 void main()
 {
@@ -65,6 +67,7 @@ void main()
 	armSpeeds = SetArmSpeeds(numArms, arms);
 	secsToRepeat = GetSecsToRepeat(armSpeeds);
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
+	//GetInflectionPoints(armSpeeds, secsToRepeat, inflectionPoints);
 	InitializeLineStrip(screenDimensions, lines, arms, window); //creates first arm of spirograph
 	//window.display();////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -231,6 +234,10 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 		colorAlgo = "Invisible";
 }
 
+void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<std::array<std::string, 2>>& inflectionPoints) {
+	
+}
+
 std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms) {
 	std::vector<float> armSpeeds;
 	
@@ -243,10 +250,18 @@ std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms) {
 
 float GetSecsToRepeat(std::vector<float> armSpeeds)
 {
+	/*
+		math explanation: 
+		armSpeeds are in degrees per second, so the higher the armspeed number, the less time it takes 
+		that wavefore to do a revolution. Its easy to make the mistake that larger numbers are faster
+		here, and think you should take the Least Common Multiple. Instead, because larger numbers mean
+		less time, we actually want to take the GCD. (360 degrees/revolution) / (<GCD> degrees/second). A 
+		little dimensional analysis gives a result in terms of seconds/revolution, exactly what we want.
+	*/
 	if (armSpeeds.size() > 1) {
-		return (360 / GCD(armSpeeds));
+		return (360 / (float)GCD(armSpeeds));
 	} else {
-		return (abs(360 / armSpeeds[0])); //must use abs() because neg. speed will otherwise cause neg. # of seconds
+		return (abs(360 / (float)armSpeeds[0])); //must use abs() because neg. speed will otherwise cause neg. # of seconds
 	}
 }
 
@@ -268,10 +283,13 @@ void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &lines, 
 
 void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms, float timeRunning)
 {
-	for (int i = 0; i < numArms; i++){
+	for (int i = 0; i < numArms; i++) {
 		sf::Vector2f oldCoord = sf::Vector2f(lines[i].position.x, lines[i].position.y);
-		float cosResult = (float)std::cos(arms[i].getAngularV_Rad() * timeRunning - (PI / 2));
-		float sinResult = (float)std::sin(arms[i].getAngularV_Rad() * timeRunning - (PI / 2));
+		float cosAngleRad = arms[i].getAngularV_Rad() * timeRunning - (PI / 2);
+		float sinAngleRad = arms[i].getAngularV_Rad() * timeRunning - (PI / 2);
+
+		float cosResult = (float)std::cos(cosAngleRad);
+		float sinResult = (float)std::sin(sinAngleRad);
 
 		lines[i + 1].position = sf::Vector2f(oldCoord.x + arms[i].getRadius() * cosResult,
 			oldCoord.y + arms[i].getRadius() * sinResult);
@@ -501,18 +519,18 @@ void setColorAlgo(std::string &colorAlgo)
 
 
 		//Euclidean algorithm. Requires positive numbers to work. abs() workaround explained below...
-float EuclideanAlgo(float num, float denom){
-
+float EuclideanAlgo(float num, float denom) {
 	//a = b*q + r
 	float a(abs(num));			//abs() won't make this *particular* program incorrect, - and + speed arms end at same starting
 	float d(abs(denom));		//point. Need abs() for negative speed values to work in algo, may be incorrect if used in other apps??
-	float q=0, r;
+	float q = 0;
+  float r;
 
-	if (a == 0)
+	if (a == 0) {
 		return d;
-	else if (d == 0)
+  } else if (d == 0) {
 		return a;
-	else{
+	} else {
 		while (a >= d){
 			a -= d;
 			q++;
@@ -523,13 +541,32 @@ float EuclideanAlgo(float num, float denom){
 }
 
 
-		//finds Greatest Common Denominator of 2 or more numbers
-float GCD(std::vector<float> armSpeeds) 
-{
+		//finds Greatest Common Denominator of 2 or more ints in a vector
+float GCD(std::vector<float> armSpeeds) {
 	float gcd = armSpeeds[0]; 
 
-	for (int i = 1; i < armSpeeds.size(); i++)
+	for (int i = 1; i < armSpeeds.size(); i++) {
 		gcd = EuclideanAlgo(gcd, armSpeeds[i]);
+	}
 
+	cout << "GCD = " << gcd << endl << endl;
 	return gcd; 
+}
+
+int GCD(int a, int b) {
+	if (b == 0)
+		return a;
+	return GCD(b, a % b);
+}
+
+int LCM(std::vector<int> numbers) {
+  int lcm = numbers[0];
+  int n = numbers.size();
+
+  for (int i = 1; i < n; i++)
+  {
+    lcm = (lcm * numbers[i]) / GCD(lcm, numbers[i]);
+  }
+  cout << "LCM = " << lcm << endl << endl;
+  return lcm;
 }
