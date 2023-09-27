@@ -36,7 +36,8 @@ void setBgrdColor(int &bgColorScheme, sf::Color &bgColor, float timeRunning);
 void setColorAlgo(std::string &colorAlgo);
 
 float EuclideanAlgo(float num, float denom);
-int GCD(std::vector<float> numbers);
+float GCD(std::vector<float> numbers);
+int GCD(int a, int b);
 int LCM(std::vector<float> numbers);
 
 void main()
