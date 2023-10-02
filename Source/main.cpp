@@ -16,6 +16,7 @@ https://www.khanacademy.org/computing/computer-science/cryptography/modarithmeti
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include "Arm.h"
 #include "Inflection.h"
 
@@ -23,10 +24,11 @@ using std::cout;
 using std::endl;
 
 #define PI 3.14159265359
-
+//3.141592653589793
 
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
 void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints);
+void CalculateInflections(std::vector<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB);
 float GetSecsToRepeat(std::vector<float> armSpeeds);
 std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms);
 void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &lines, std::vector<Arm> &arms, sf::RenderWindow &window);
@@ -34,11 +36,12 @@ void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms,
 void ColorAlgorithm(std::vector<sf::Vertex> &Vlines, std::string algoName, float timeRunning, float repeatSecs);
 void setBgrdColor(int &bgColorScheme, sf::Color &bgColor, float timeRunning);
 void setColorAlgo(std::string &colorAlgo);
-
 float EuclideanAlgo(float num, float denom);
 float GCD(std::vector<float> numbers);
 int GCD(int a, int b);
 int LCM(std::vector<float> numbers);
+
+
 
 void main()
 {
@@ -58,6 +61,7 @@ void main()
 	std::vector<Arm> arms;	//# rotating arms that make up graph
 	std::vector<float> armSpeeds;
 	std::vector<sf::Vertex> Vlines;
+	std::vector<Inflection> inflectionPoints;
 
 	GetUserInput(arms, numArms, colorAlgo);
 		//For arms of spirograph -- linestrips are lines where the end vertex of a line is the starting vertex of the next line
@@ -68,9 +72,9 @@ void main()
 	armSpeeds = SetArmSpeeds(numArms, arms);
 	secsToRepeat = GetSecsToRepeat(armSpeeds);
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
-	//GetInflectionPoints(armSpeeds, secsToRepeat, inflectionPoints);
+	GetInflectionPoints(armSpeeds, secsToRepeat, inflectionPoints);
 	InitializeLineStrip(screenDimensions, lines, arms, window); //creates first arm of spirograph
-	//window.display();////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//window.display();//////////////////////////////////////////////////////////////////////////////////////
 
 	sf::Clock clock, refreshClock;
 	sf::Time timeRunning, refreshTime;
@@ -235,8 +239,93 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 		colorAlgo = "Invisible";
 }
 
-void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<std::array<std::string, 2>>& inflectionPoints) {
-	
+void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints) {
+	std::vector<Inflection> comparisonVector;
+
+	for (int i = 0; i < armSpeeds.size() - 1; i++) {
+			//add special case for i = 0
+		CalculateInflections(inflectionPoints, "normal", armSpeeds[i], armSpeeds[i + 1], secsToRepeat);
+		CalculateInflections(inflectionPoints, "opposite", armSpeeds[i], armSpeeds[i + 1], secsToRepeat);
+			//1. if i != 0, called CalculateInflections again twice but add comparisonVector instead of inflectionPoints
+			//2. if inflectionPoints has any values that are not in comparison vector, delete them from inflectionPoints
+			//2a. if a value in inflectionPoints was "normal" but it shares a value with a comparisonVector entry marked 
+			//		as opposite, change the inflectionPoints entry to be marked as "opposite"
+			//3. after going through all possible comparison vectors, and excising bum entries and marking "opposite" 
+			//		entries correctly, you should have a valid list of inflection points to send to a 3D coloring algorithm
+			//note: make sure the final list gets turned into a set to de-dupe before going to the 3D coloring algorithm
+	}
+}
+
+void CalculateInflections(
+		std::vector<Inflection> &inflectionPoints, 
+		std::string typeToCalculate, 
+		float armSpeedA, 
+		float armSpeedB, 
+		float secsToRepeat) {
+
+	if (typeToCalculate == "normal") { //checking for 
+		std::vector<float> cosineNormalTimeValues;
+		std::vector<float> sineNormalTimeValues;
+			//need multiple values here because the equation for t has +/- for both sine and cos :(
+			// see if there's a way to do this that's easier to read!
+		float prospectiveCosTime1;
+		float prospectiveCosTime2;
+		float prospectiveSineTime1;
+		float prospectiveSineTime2;
+		bool cos1Done = false;
+		bool cos2Done = false;
+		bool sine1Done = false;
+		bool sine2Done = false;
+		for (int i = 0; cos1Done == false || sine1Done == false || cos2Done == false || sine2Done == false; i ++) {
+				// cos + case
+			prospectiveCosTime1 = (2 * PI * i) / (armSpeedA + armSpeedB);
+			if (prospectiveCosTime1 > secsToRepeat) {
+				cos1Done == true;
+			} else if (!cos1Done) {
+				cosineNormalTimeValues.push_back(prospectiveCosTime1);
+			}
+				// cos - case
+			prospectiveCosTime2 = (2 * PI * i) / (armSpeedA - armSpeedB);
+			if (prospectiveCosTime2 > secsToRepeat) {
+				cos2Done == true;
+			}
+			else if (!cos2Done) {
+				cosineNormalTimeValues.push_back(prospectiveCosTime2);
+			}
+				// sine + case
+			prospectiveSineTime1 = (2 * PI * i) / (armSpeedA - armSpeedB);
+			if (prospectiveSineTime1 > secsToRepeat) {
+				sine1Done == true;
+			}
+			else if (!sine1Done) {
+				sineNormalTimeValues.push_back(prospectiveSineTime1);
+			}
+				// sine - case
+			prospectiveSineTime2 = (2 * PI * i + PI) / (armSpeedA + armSpeedB);
+			if (prospectiveSineTime2 > secsToRepeat) {
+				sine2Done == true;
+			}
+			else if (!sine2Done) {
+				sineNormalTimeValues.push_back(prospectiveSineTime2);
+			}
+		}
+
+		// add inflection points to returning vector only if both sine and cos contain the same time value
+		// which means that sine and cos both match 
+		for (int i = 0; i < cosineNormalTimeValues.size(); i++ ) {
+			if (std::find(sineNormalTimeValues.begin(), sineNormalTimeValues.end(), cosineNormalTimeValues[i]) != sineNormalTimeValues.end()) {
+				Inflection infl(cosineNormalTimeValues[i], typeToCalculate);
+				inflectionPoints.push_back(infl);
+			}
+		}
+	}
+	else if (typeToCalculate == "opposite") {
+		//Same as above but with different equations. Just make a function!
+	}
+	else {
+		//TODO return error
+	}
+
 }
 
 std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms) {
