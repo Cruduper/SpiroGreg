@@ -567,26 +567,24 @@ void ColorAlgoFuschiaGradient(std::vector<sf::Vertex>& Vlines, float repeatSecs,
 {
 	int red = 255, green = 0, blue = 128;
 
-
 	/*********
 
-		//template for equation that appears in all the if...else if branches:
+		//template for equation that appears in the below 'if...else if' branches:
 	red = $starting_rbg_value$ +/- ( $rgb_change_amount$ * ( (percentComplete % 1000) / $interval_between_different_colors$) );
 
 		//example:
 	red = 255 - (127 * ( (percentComplete % 1000) / 333.0f ) );		//pnk to purp
 
-	$starting_rbg_value$	  = 255			//should be the value that red ended at in the previous statement in the if...else (unless there's no previous )
-	$rgb_change_amount$		  =	127			//red drops by 127 from the starting amount of 255 over an interval of 333 (or 1/3 a pattern rotation)
-	$interval_between_colors$ = 333			//This is out of a possible 1000. So 333 means the color will change from pink to purple as spirograph
+	$starting_rbg_value$	  = 255		//should be the value that red ended at in the previous statement in the if...else (unless there's no previous )
+	$rgb_change_amount$		  =	127		//red drops by 127 from the starting amount of 255 over an interval of 333 (or 1/3 a pattern rotation)
+	$interval_between_colors$ = 333		//This is out of a possible 1000. So 333 means the color will change from pink to purple as spirograph
 	//does 1/3 of a full pattern
 
-	Note:	the "% 1000" next to percentComplete is necessary in the if statements. It is not necessary in the body
-	of the statements unless you WANT to keep on drawing colors AFTER 1 full pattern rotation. They are left
+	Note: the "% 1000" next to percentComplete is necessary in the if conditionals. It is not necessary in the BODY
+	of the if statements unless you WANT to keep on drawing colors AFTER 1 full pattern rotation. They are left
 	inside the if statements for future flexibility.
 
 	***********/
-
 
 	if ((percentComplete % 1000) < 333) {		//pnk to purp
 		red = 255 - (127 * ((percentComplete % 1000) / 333.0f));
