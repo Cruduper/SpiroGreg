@@ -1,15 +1,3 @@
-/*
-2017 Timedog
-
-
-Learning resources used:
-https://www.youtube.com/watch?v=hnjhCFA4GnM -- SFML VertexArray tutorial 1
-https://www.youtube.com/watch?v=5GkcGw09D8w -- SFML VertexArray tutorial 2
-https://en.sfml-dev.org/forums/index.php?topic=11577.0 -- SFML simple paint program
-https://www.khanacademy.org/computing/computer-science/cryptography/modarithmetic/a/the-euclidean-algorithm --basic Euclidean algorithm
-
-*/
-
 #include <SFML/Graphics.hpp>
 #include <math.h>
 #include <string>
@@ -28,12 +16,12 @@ using std::endl;
 
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
 void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints);
-void CalculateInflections(std::vector<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB);
+void CalculateInflections(std::vector<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB, float secsToRepeat);
 float GetSecsToRepeat(std::vector<float> armSpeeds);
 std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms);
 void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &lines, std::vector<Arm> &arms, sf::RenderWindow &window);
 void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms, float timeRunning);
-void ColorAlgorithm(std::vector<sf::Vertex> &Vlines, std::string algoName, float timeRunning, float repeatSecs);
+void ColorAlgorithmHandler(std::vector<sf::Vertex> &Vlines, std::string algoName, float timeRunning, float repeatSecs);
 void setBgrdColor(int &bgColorScheme, sf::Color &bgColor, float timeRunning);
 void setColorAlgo(std::string &colorAlgo);
 float EuclideanAlgo(float num, float denom);
@@ -72,7 +60,7 @@ void main()
 	armSpeeds = SetArmSpeeds(numArms, arms);
 	secsToRepeat = GetSecsToRepeat(armSpeeds);
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
-	GetInflectionPoints(armSpeeds, secsToRepeat, inflectionPoints);
+	//GetInflectionPoints(armSpeeds, secsToRepeat, inflectionPoints);
 	InitializeLineStrip(screenDimensions, lines, arms, window); //creates first arm of spirograph
 	//window.display();//////////////////////////////////////////////////////////////////////////////////////
 
@@ -124,7 +112,7 @@ void main()
 		//if (refreshTime.asMilliseconds() > 5.0f) {
 			if ( secsToRepeat > (timeRunning.asSeconds() - .1f) ){
 				Vlines.push_back(sf::Vertex(sf::Vector2f(lines[numArms].position)));	//creates new vertices (to be colored)
-				ColorAlgorithm( Vlines, colorAlgo, timeRunning.asMilliseconds(), secsToRepeat );						//defines spirograph color scheme
+				ColorAlgorithmHandler( Vlines, colorAlgo, timeRunning.asMilliseconds(), secsToRepeat );						//defines spirograph color scheme
 				refreshClock.restart();
 			} else {
 				showLines = false;
@@ -142,10 +130,9 @@ void main()
 			texture.create(windowSize.x, windowSize.y);
 			texture.update(window);
 			sf::Image screenshot = texture.copyToImage();
-			//screenshot = window.capture(); //capture() is deprecated
 			std::stringstream filename;
-      filename << "screenshots/SpiroGreg_" << screenshotNum << ".png";
-      screenshot.saveToFile(filename.str());
+			filename << "screenshots/SpiroGreg_" << screenshotNum << ".png";
+			screenshot.saveToFile(filename.str());
 			takeScreenShot = false;
 		}
 		window.display();
@@ -389,7 +376,7 @@ void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms,
 
 
 
-void ColorAlgorithm(std::vector<sf::Vertex> &Vlines, std::string algoName, float timeRunning, float repeatSecs)
+void ColorAlgorithmHandler(std::vector<sf::Vertex> &Vlines, std::string algoName, float timeRunning, float repeatSecs)
 {
 	int percentComplete = (int)(timeRunning / repeatSecs);	//percent of pattern cyle completed 
 															//out of 1000% max (not 100%)
