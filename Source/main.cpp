@@ -20,26 +20,32 @@ using std::endl;
 
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
 bool AskUserToRepeat();
-void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection> &inflectionPoints);
-void CalculateInflections(std::set<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB, float secsToRepeat);
+void GetInflectionPointsSimple(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection>& inflectionPoints);
+//void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection> &inflectionPoints);
+//void CalculateInflections(std::set<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB, float secsToRepeat);
 float GetSecsToRepeat(std::vector<float> armSpeeds);
 std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms);
 void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &lines, std::vector<Arm> &arms, sf::RenderWindow &window);
 void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms, float timeRunning);
 void UpdateArms(sf::Vector2f origin, std::vector<Arm> &arms, sf::VertexArray &armLines, int numArms, sf::Time timeRunning);
-void ColorAlgorithmHandler(std::vector<sf::Vertex> &Vlines, std::string algoName, float timeRunning, float repeatSecs);
+void CalculateInflectionsSimple(std::set<Inflection>& inflectionPoints, float armSpeedA, float armSpeedB, float secsToRepeat);
+void GetMatchesFromLists(std::set<Inflection>& inflectionPoints, std::vector<float> listA, std::vector<float> listB, std::string matchType);
+void FindMatches(std::vector<float> &matchList, float armSpeedA, float armSpeedB, float secsToRepeat, std::string formula1, std::string formula2);
+float GetFormulaResult(std::string formula, float armSpeedA, float armSpeedB, int i);
 void setBgrdColor(int &bgColorScheme, sf::Color &bgColor, float timeRunning);
-void ColorAlgoSolid(std::vector<sf::Vertex>& Vlines, sf::Color color);
-void ColorAlgoFireGradient(std::vector<sf::Vertex>& Vlines, float repeatSecs, int percentComplete);
-void ColorAlgoFuschiaGradient(std::vector<sf::Vertex>& Vlines, float repeatSecs, int percentComplete);
-void ColorAlgoRainbowGradient(std::vector<sf::Vertex>& Vlines, float repeatSecs);
-void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex>& Vlines, float repeatSecs);
-void ColorAlgoConfetti(std::vector<sf::Vertex>& Vlines);
-void setColorAlgo(std::string &colorAlgo);
 float EuclideanAlgo(float num, float denom);
 float GCD(std::vector<float> numbers);
 int GCD(int a, int b);
 int LCM(std::vector<float> numbers);
+float RoundToXDecimals(float num, int x);
+void setColorAlgo(std::string& colorAlgo);
+void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph);
+void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color);
+void ColorAlgoFireGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
+void ColorAlgoFuschiaGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
+void ColorAlgoRainbowGradient(std::vector<sf::Vertex> &graph, float repeatSecs);
+void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex> &graph, float repeatSecs);
+void ColorAlgoConfetti(std::vector<sf::Vertex> &graph);
 
 
 
@@ -53,7 +59,7 @@ void main()
 	std::string colorAlgo = "White";
 	std::vector<Arm> arms;	//# rotating arms that make up graph
 	std::vector<float> armSpeeds;
-	std::vector<sf::Vertex> Vlines;
+	std::vector<sf::Vertex> graph;
 	std::set<Inflection> inflectionPoints;
 	sf::Clock clock, refreshClock;
 	sf::Time timeRunning, refreshTime;
@@ -62,6 +68,7 @@ void main()
 	int bgColorScheme = 0;
 	bool showArmLines = true;
 	bool takeScreenShot = false;
+	bool is3DGraph = true; //! developer debug variable (for now)
 
 
 	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "SpiroGreg");
@@ -116,8 +123,8 @@ void main()
 
 		//if (refreshTime.asMilliseconds() > 5.0f) {
 			if ( secsToRepeat > (timeRunning.asSeconds() - .1f) ){
-				Vlines.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
-				ColorAlgorithmHandler( Vlines, colorAlgo, timeRunning.asMilliseconds(), secsToRepeat );						//defines spirograph color scheme
+				graph.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
+				ColorAlgorithmHandler(graph, colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph);
 				refreshClock.restart();
 			} else {
 				showArmLines = false;
@@ -125,8 +132,8 @@ void main()
 		//}
 
 
-		if ( Vlines.size() )
-			window.draw(&Vlines[0], Vlines.size(), sf::LinesStrip); //draws colored strip
+		if ( graph.size() )
+			window.draw(&graph[0], graph.size(), sf::LinesStrip); //draws colored strip
 		if ( showArmLines )
 			window.draw(armLines);										//draws arms
 		if ( takeScreenShot ) {
@@ -153,7 +160,7 @@ void main()
 			if (AskUserToRepeat())
 			{
 				timeRunning = sf::Time::Zero;
-				Vlines.resize(0);
+				graph.resize(0);
 				InitializeLineStrip(screenDimensions, armLines, arms, window);
 				UpdateArms(origin, arms, armLines, numArms, timeRunning);
 			}
@@ -163,7 +170,6 @@ void main()
 	}
 
 }//end main
-
 
 
 
@@ -392,7 +398,8 @@ void GetMatchesFromLists(
 		{
 			if (RoundToXDecimals(listA[i], 3) == RoundToXDecimals(listB[i], 3))
 			{
-				inflectionPoints.insert(Inflection(RoundToXDecimals(listA[i], 3), matchType));
+				Inflection newInflection = Inflection::Inflection(RoundToXDecimals(listA[i], 3), matchType);
+				inflectionPoints.insert(newInflection);
 				break;
 			}
 		}
@@ -402,10 +409,9 @@ void GetMatchesFromLists(
 
 
 void FindMatches(
-	std::vector<float> matchList, float armSpeedA, float armSpeedB, 
+	std::vector<float> &matchList, float armSpeedA, float armSpeedB, 
 	float secsToRepeat, std::string formula1, std::string formula2)
 {
-	std::vector<float> matchList;
 	bool formula1Done = false, formula2Done = false;
 
 	int n = 1;
@@ -528,39 +534,50 @@ void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms,
 
 		//! VERY inefficient to call this function every update for solid colors. Create an isSolidColor switch that makes this
 		//! run only once for solid colors
-void ColorAlgorithmHandler(std::vector<sf::Vertex> &Vlines, std::string algoName, float timeRunning, float repeatSecs)
+void ColorAlgorithmHandler(
+		std::vector<sf::Vertex> &graph, 
+		std::string algoName, 
+		float timeRunning, 
+		float repeatSecs, 
+		std::set<Inflection>& inflectionPoints,
+		bool is3Dgraph)
 {
 	int percentComplete = (int)(timeRunning / repeatSecs);	//percent of pattern cyle completed out of 1000% max (not 100%)
+
+	//if (is3Dgraph)
+	//{
+	//	ColorAlgo3DDefault()
+	//}
 
 	if ( (algoName.compare("Invisible") == 0) || (algoName.compare("White") == 0) || (algoName.compare("Red") == 0) 
 			|| (algoName.compare("Cyan") == 0) || (algoName.compare("Magenta") == 0) || (algoName.compare("Green") == 0) 
 			|| (algoName.compare("Yellow") == 0) || (algoName.compare("Orange") == 0) || (algoName.compare("Grey") == 0) ) { 
-		ColorAlgoSolid(Vlines, sf::Color::Transparent);
+		ColorAlgoSolid(graph, sf::Color::Transparent);
 		return;
 	}
 
 	if (algoName.compare("Fire Gradient") == 0){
-		ColorAlgoFireGradient(Vlines, repeatSecs, percentComplete);
+		ColorAlgoFireGradient(graph, repeatSecs, percentComplete);
 		return;
 	}
 
 	if (algoName.compare("Fuschia Gradient") == 0){
-		ColorAlgoFuschiaGradient(Vlines, repeatSecs, percentComplete);
+		ColorAlgoFuschiaGradient(graph, repeatSecs, percentComplete);
 		return;
 	}
 
 	if (algoName.compare("Rainbow Gradient") == 0){
-		ColorAlgoRainbowGradient(Vlines, repeatSecs);
+		ColorAlgoRainbowGradient(graph, repeatSecs);
 		return;
 	}
 
 	if (algoName.compare("Rainbow Discrete") == 0){
-		ColorAlgoRainbowDiscrete(Vlines, repeatSecs);
+		ColorAlgoRainbowDiscrete(graph, repeatSecs);
 		return;
 	}
 
 	if (algoName.compare("Confetti") == 0){
-		ColorAlgoConfetti(Vlines);
+		ColorAlgoConfetti(graph);
 		return;
 	}
 }//end Color Algo
@@ -676,30 +693,29 @@ float RoundToXDecimals(float num, int x)
 
 /**************************** COLORING ALGORITHMS ****************************/
 
-
-void ColorAlgoSolid(std::vector<sf::Vertex>& Vlines, sf::Color color)
+void ColorAlgoSolid(std::vector<sf::Vertex>& graph, sf::Color color)
 {
-	Vlines[Vlines.size() - 1].color = color;
+	graph[graph.size() - 1].color = color;
 }
 
-void ColorAlgoFireGradient(std::vector<sf::Vertex>& Vlines, float repeatSecs, int percentComplete)
+void ColorAlgoFireGradient(std::vector<sf::Vertex>& graph, float repeatSecs, int percentComplete)
 {
 	int red = 255, green = 0, blue = 0;
 	repeatSecs *= 4.44;
 
 	if ((percentComplete % 1000) < 500) {		//red to yellow
 		green = 0 + (255 * (percentComplete % 1000) / 500.0f);
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
 	else {													//yellow to red
 		green = 255 - (255 * (percentComplete % 1000 - 500) / 500.0f);
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
 }
 
-void ColorAlgoFuschiaGradient(std::vector<sf::Vertex>& Vlines, float repeatSecs, int percentComplete)
+void ColorAlgoFuschiaGradient(std::vector<sf::Vertex>& graph, float repeatSecs, int percentComplete)
 {
 	int red = 255, green = 0, blue = 128;
 
@@ -724,7 +740,7 @@ void ColorAlgoFuschiaGradient(std::vector<sf::Vertex>& Vlines, float repeatSecs,
 
 	if ((percentComplete % 1000) < 333) {		//pnk to purp
 		red = 255 - (127 * ((percentComplete % 1000) / 333.0f));
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 
 		//if (red < 129)
 			//cout << "red =" << red << endl;
@@ -734,104 +750,104 @@ void ColorAlgoFuschiaGradient(std::vector<sf::Vertex>& Vlines, float repeatSecs,
 		red = 128 - (28 * ((percentComplete % 1000 - 333) / 333.0f));
 		blue = 128 + (92 * ((percentComplete % 1000 - 333) / 333.0f));
 		green = 0 + (50 * ((percentComplete % 1000 - 333) / 333.0f));
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
 	else if ((percentComplete % 1000) < 1000) {	//blue to pnk
 		red = 100 + (155 * ((percentComplete % 1000 - 666) / 333.0f));
 		blue = 220 - (92 * ((percentComplete % 1000 - 666) / 333.0f));
 		green = 50 - (50 * ((percentComplete % 1000 - 666) / 333.0f));
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 	}
 }
 
-void ColorAlgoRainbowGradient(std::vector<sf::Vertex>& Vlines, float repeatSecs)
+void ColorAlgoRainbowGradient(std::vector<sf::Vertex>& graph, float repeatSecs)
 {
 	int red = 0, green = 0, blue = 0;
 	repeatSecs *= 1.25;	//larger value makes gradient fade between colors slower
 
-	if ((Vlines.size() / (int)repeatSecs) % 8 == 0) {				//red to orng
+	if ((graph.size() / (int)repeatSecs) % 8 == 0) {				//red to orng
 		red = 255;
-		green = 0 + (165 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		green = 0 + (165 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
-	else if ((Vlines.size() / (int)repeatSecs) % 8 == 1) {			//orng to yell	
+	else if ((graph.size() / (int)repeatSecs) % 8 == 1) {			//orng to yell	
 		red = 255;
-		green = 165 + (90 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		green = 165 + (90 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
-	else if ((Vlines.size() / (int)repeatSecs) % 8 == 2) {			//yell to grn
-		red = 255 - (255 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
+	else if ((graph.size() / (int)repeatSecs) % 8 == 2) {			//yell to grn
+		red = 255 - (255 * (graph.size() % (int)repeatSecs) / repeatSecs);
 		green = 255;
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
-	else if ((Vlines.size() / (int)repeatSecs) % 8 == 3) {			//grn to blu
+	else if ((graph.size() / (int)repeatSecs) % 8 == 3) {			//grn to blu
 		green = 255;
-		blue = 0 + (255 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		blue = 0 + (255 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
-	else if ((Vlines.size() / (int)repeatSecs) % 8 == 4) {			//blu to indi
+	else if ((graph.size() / (int)repeatSecs) % 8 == 4) {			//blu to indi
 		blue = 255;
-		green = 255 - (155 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		red = 0 + (190 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		green = 255 - (155 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		red = 0 + (190 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
-	else if ((Vlines.size() / (int)repeatSecs) % 8 == 5) {			//indi to viol
-		red = 190 + (10 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		green = 100 - (70 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		blue = 255 - (25 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+	else if ((graph.size() / (int)repeatSecs) % 8 == 5) {			//indi to viol
+		red = 190 + (10 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		green = 100 - (70 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		blue = 255 - (25 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
-	else if ((Vlines.size() / (int)repeatSecs) % 8 == 6) {			//viol to mag
-		red = 200 + (55 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		blue = 230 + (25 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		green = 30 - (30 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+	else if ((graph.size() / (int)repeatSecs) % 8 == 6) {			//viol to mag
+		red = 200 + (55 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		blue = 230 + (25 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		green = 30 - (30 * (graph.size() % (int)repeatSecs) / repeatSecs);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
-	else if ((Vlines.size() / (int)repeatSecs) % 8 == 7) {			//mag to red
+	else if ((graph.size() / (int)repeatSecs) % 8 == 7) {			//mag to red
 
-		blue = 255 - (255 * (Vlines.size() % (int)repeatSecs) / repeatSecs);
+		blue = 255 - (255 * (graph.size() % (int)repeatSecs) / repeatSecs);
 		red = 255;
-		Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+		graph[graph.size() - 1].color = sf::Color(red, green, blue);
 		return;
 	}
 }
 
-void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex>& Vlines, float repeatSecs)
+void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex>& graph, float repeatSecs)
 {
-	int vLength = ((Vlines.size() - 1) / (int)repeatSecs) % 160;
+	int vLength = ((graph.size() - 1) / (int)repeatSecs) % 160;
 
 	if (vLength < 20)
-		Vlines[Vlines.size() - 1].color = sf::Color::Red;
+		graph[graph.size() - 1].color = sf::Color::Red;
 	else if (vLength >= 20 && vLength < 40)
-		Vlines[Vlines.size() - 1].color = sf::Color(255, 165, 0);
+		graph[graph.size() - 1].color = sf::Color(255, 165, 0);
 	else if (vLength >= 40 && vLength < 60)
-		Vlines[Vlines.size() - 1].color = sf::Color::Yellow;
+		graph[graph.size() - 1].color = sf::Color::Yellow;
 	else if (vLength >= 60 && vLength < 80)
-		Vlines[Vlines.size() - 1].color = sf::Color::Green;
+		graph[graph.size() - 1].color = sf::Color::Green;
 	else if (vLength >= 80 && vLength < 100)
-		Vlines[Vlines.size() - 1].color = sf::Color::Blue;
+		graph[graph.size() - 1].color = sf::Color::Blue;
 	else if (vLength >= 100 && vLength < 120)
-		Vlines[Vlines.size() - 1].color = sf::Color(75, 0, 130);
+		graph[graph.size() - 1].color = sf::Color(75, 0, 130);
 	else if (vLength >= 120 && vLength < 140)
-		Vlines[Vlines.size() - 1].color = sf::Color(128, 0, 128);
+		graph[graph.size() - 1].color = sf::Color(128, 0, 128);
 	else if (vLength >= 140 && vLength < 160)
-		Vlines[Vlines.size() - 1].color = sf::Color::Magenta;
+		graph[graph.size() - 1].color = sf::Color::Magenta;
 	return;
 }
 
-void ColorAlgoConfetti(std::vector<sf::Vertex>& Vlines)
+void ColorAlgoConfetti(std::vector<sf::Vertex>& graph)
 {
 	int red = rand() & 250 + 5;
 	int green = rand() % 250 + 5;
 	int blue = rand() % 250 + 5;
 
-	Vlines[Vlines.size() - 1].color = sf::Color(red, green, blue);
+	graph[graph.size() - 1].color = sf::Color(red, green, blue);
 }
