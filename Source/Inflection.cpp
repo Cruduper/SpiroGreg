@@ -34,7 +34,7 @@ void Inflection::setTime(float t)
 	time = t;
 }
 
-void Inflection::setType(std::string inflectionType)
+void Inflection::setType(std::string inflectionType) //types are "coincident" or "reverseCoincident"
 {
 	type = inflectionType;
 }
