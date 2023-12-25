@@ -47,36 +47,35 @@ void main()
 {
 	sf::Vector2i screenDimensions(1200, 900);
 	sf::Vector2f origin(screenDimensions.x / 2.0f, screenDimensions.y / 2.0f);
-
 	sf::RenderWindow window;
-	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "SpiroGreg");
-	//int framerate = 60;
-	//window.setFramerateLimit(framerate);
-
-	int numArms, screenshotNum = 1;
-	int bgColorScheme = 0;
 	sf::Color bgColor(0,0,0);
 	std::string colorAlgo = "White";
-	float secsToRepeat;		//seconds it takes to draw entire spirograph pattern, pattern will repeat after this if not stopped
 	std::vector<Arm> arms;	//# rotating arms that make up graph
 	std::vector<float> armSpeeds;
 	std::vector<sf::Vertex> Vlines;
 	std::vector<Inflection> inflectionPoints;
-
-	GetUserInput(arms, numArms, colorAlgo);
-		//For arms of spirograph -- linestrips are lines where the end vertex of a line is the starting vertex of the next line
-	sf::VertexArray armLines(sf::LinesStrip, numArms + 1);
+	sf::Clock clock, refreshClock;
+	sf::Time timeRunning, refreshTime;
+	float secsToRepeat;		//seconds it takes to draw entire spirograph pattern, pattern will repeat after this if not stopped
+	int numArms, screenshotNum = 1;
+	int bgColorScheme = 0;
 	bool showArmLines = true;
 	bool takeScreenShot = false;
 
+
+	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "SpiroGreg");
+	GetUserInput(arms, numArms, colorAlgo);
+
+		//For arms of spirograph -- linestrips are lines where the end vertex of a line is the starting vertex of the next line
+	sf::VertexArray armLines(sf::LinesStrip, numArms + 1);
 	armSpeeds = SetArmSpeeds(numArms, arms);
 	secsToRepeat = GetSecsToRepeat(armSpeeds);
+
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
 	//GetInflectionPoints(armSpeeds, secsToRepeat, inflectionPoints);
 	InitializeLineStrip(screenDimensions, armLines, arms, window); //creates first arm of spirograph
 
-	sf::Clock clock, refreshClock;
-	sf::Time timeRunning, refreshTime;
+
 
 	while (window.isOpen()){
 		
@@ -293,7 +292,7 @@ void CalculateInflections(
 	if (typeToCalculate == "normal") { //checking for 
 		std::vector<float> cosineNormalTimeValues;
 		std::vector<float> sineNormalTimeValues;
-			//need multiple values here because the equation for t has +/- for both sine and cos :(
+			// need multiple values here because the equation for t has +/- for both sine and cos :(
 			// see if there's a way to do this that's easier to read!
 		float prospectiveCosTime1;
 		float prospectiveCosTime2;
