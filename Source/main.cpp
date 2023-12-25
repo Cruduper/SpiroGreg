@@ -8,6 +8,9 @@
 #include "Arm.h"
 #include "Inflection.h"
 
+
+
+
 using std::cout;
 using std::endl;
 
@@ -38,19 +41,6 @@ int LCM(std::vector<float> numbers);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 void main()
 {
 	sf::Vector2i screenDimensions(1200, 900);
@@ -73,15 +63,15 @@ void main()
 
 	GetUserInput(arms, numArms, colorAlgo);
 		//For arms of spirograph -- linestrips are lines where the end vertex of a line is the starting vertex of the next line
-	sf::VertexArray lines(sf::LinesStrip, numArms + 1);
-	bool showLines = true;
+	sf::VertexArray armLines(sf::LinesStrip, numArms + 1);
+	bool showArmLines = true;
 	bool takeScreenShot = false;
 
 	armSpeeds = SetArmSpeeds(numArms, arms);
 	secsToRepeat = GetSecsToRepeat(armSpeeds);
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
 	//GetInflectionPoints(armSpeeds, secsToRepeat, inflectionPoints);
-	InitializeLineStrip(screenDimensions, lines, arms, window); //creates first arm of spirograph
+	InitializeLineStrip(screenDimensions, armLines, arms, window); //creates first arm of spirograph
 	//window.display();//////////////////////////////////////////////////////////////////////////////////////
 
 	sf::Clock clock, refreshClock;
@@ -107,11 +97,11 @@ void main()
 					setColorAlgo(colorAlgo);
 				}
 				else if (Event.key.code == sf::Keyboard::L) {
-					if (showLines) {
-						showLines = false;
+					if (showArmLines) {
+						showArmLines = false;
 					}
 					else {
-						showLines = true;
+						showArmLines = true;
 					}
 				}
 				else if (Event.key.code == sf::Keyboard::P) {
@@ -123,27 +113,27 @@ void main()
 
 
 		//sets initial position of the endpoint of the first arm
-		lines[1].position = sf::Vector2f(origin.x + (arms[0].getRadius() * (float)std::cos(timeRunning.asSeconds() * arms[0].getAngularV_Rad() - (PI / 2))),
+		armLines[1].position = sf::Vector2f(origin.x + (arms[0].getRadius() * (float)std::cos(timeRunning.asSeconds() * arms[0].getAngularV_Rad() - (PI / 2))),
 			origin.y + (arms[0].getRadius() * (float)std::sin(timeRunning.asSeconds() * arms[0].getAngularV_Rad() - (PI / 2))));
-		lines[1].color = sf::Color::White;
+		armLines[1].color = sf::Color::White;
 
-		CreateLineStrip(lines, numArms, arms, timeRunning.asSeconds());					//creates arms of spirograph from user's input data
+		CreateLineStrip(armLines, numArms, arms, timeRunning.asSeconds());					//creates arms of spirograph from user's input data
 
 		//if (refreshTime.asMilliseconds() > 5.0f) {
 			if ( secsToRepeat > (timeRunning.asSeconds() - .1f) ){
-				Vlines.push_back(sf::Vertex(sf::Vector2f(lines[numArms].position)));	//creates new vertices (to be colored)
+				Vlines.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
 				ColorAlgorithmHandler( Vlines, colorAlgo, timeRunning.asMilliseconds(), secsToRepeat );						//defines spirograph color scheme
 				refreshClock.restart();
 			} else {
-				showLines = false;
+				showArmLines = false;
 			}
 		//}
 
 
 		if ( Vlines.size() )
 			window.draw(&Vlines[0], Vlines.size(), sf::LinesStrip); //draws colored strip
-		if ( showLines )
-			window.draw(lines);										//draws arms
+		if ( showArmLines )
+			window.draw(armLines);										//draws arms
 		if ( takeScreenShot ) {
 			sf::Vector2u windowSize = window.getSize();
 			sf::Texture texture;
@@ -248,7 +238,8 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 		colorAlgo = "Invisible";
 }
 
-void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints) {
+void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints) 
+{
 	std::vector<Inflection> comparisonVector;
 
 	for (int i = 0; i < armSpeeds.size() - 1; i++) {
@@ -270,8 +261,8 @@ void CalculateInflections(
 		std::string typeToCalculate, 
 		float armSpeedA, 
 		float armSpeedB, 
-		float secsToRepeat) {
-
+		float secsToRepeat) 
+{
 	if (typeToCalculate == "normal") { //checking for 
 		std::vector<float> cosineNormalTimeValues;
 		std::vector<float> sineNormalTimeValues;
@@ -337,7 +328,8 @@ void CalculateInflections(
 
 }
 
-std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms) {
+std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms) 
+{
 	std::vector<float> armSpeeds;
 	
 	for (int i = 0; i < numArms; i++)
@@ -405,8 +397,7 @@ void ColorAlgorithmHandler(std::vector<sf::Vertex> &Vlines, std::string algoName
 
 	if ( (algoName.compare("Invisible") == 0) || (algoName.compare("White") == 0) || (algoName.compare("Red") == 0) 
 			|| (algoName.compare("Cyan") == 0) || (algoName.compare("Magenta") == 0) || (algoName.compare("Green") == 0) 
-			|| (algoName.compare("Yellow") == 0) || (algoName.compare("Orange") == 0) || (algoName.compare("Grey") == 0) ) 
-	{ 
+			|| (algoName.compare("Yellow") == 0) || (algoName.compare("Orange") == 0) || (algoName.compare("Grey") == 0) ) { 
 		ColorAlgoSolid(Vlines, sf::Color::Transparent);
 		return;
 	}
@@ -446,15 +437,13 @@ void setBgrdColor(int &bgColorScheme, sf::Color &color, float timeRunning)
 		color = sf::Color(25, 25, 25);
 	else if (bgColorScheme % 4 == 2)		//grey
 		color = sf::Color(50, 50, 50);
-	else if (((int)timeRunning % 65 == 0))		//rainbow flash
-	{
+	else if (((int)timeRunning % 65 == 0)){		//rainbow flash
 		int red = rand() & 60;
 		int green = rand() % 60;
 		int blue = rand() % 60;
 
 		color = sf::Color(red, green, blue);
 	}
-
 }
 
 
@@ -480,18 +469,19 @@ void setColorAlgo(std::string &colorAlgo)
 
 
 		//Euclidean algorithm. Requires positive numbers to work. abs() workaround explained below...
-float EuclideanAlgo(float num, float denom) {
+float EuclideanAlgo(float num, float denom) 
+{
 	//a = b*q + r
 	float a(abs(num));			//abs() won't make this *particular* program incorrect, - and + speed arms end at same starting
 	float d(abs(denom));		//point. Need abs() for negative speed values to work in algo, may be incorrect if used in other apps??
 	float q = 0;
   float r;
 
-	if (a == 0) {
+	if (a == 0) 
 		return d;
-  } else if (d == 0) {
+	else if (d == 0) 
 		return a;
-	} else {
+	else {
 		while (a >= d){
 			a -= d;
 			q++;
@@ -503,7 +493,8 @@ float EuclideanAlgo(float num, float denom) {
 
 
 		//finds Greatest Common Denominator of 2 or more ints in a vector
-float GCD(std::vector<float> armSpeeds) {
+float GCD(std::vector<float> armSpeeds) 
+{
 	float gcd = armSpeeds[0]; 
 
 	for (int i = 1; i < armSpeeds.size(); i++) {
@@ -514,13 +505,15 @@ float GCD(std::vector<float> armSpeeds) {
 	return gcd; 
 }
 
-int GCD(int a, int b) {
+int GCD(int a, int b) 
+{
 	if (b == 0)
 		return a;
 	return GCD(b, a % b);
 }
 
-int LCM(std::vector<int> numbers) {
+int LCM(std::vector<int> numbers) 
+{
   int lcm = numbers[0];
   int n = numbers.size();
 
