@@ -18,6 +18,7 @@ using std::endl;
 //3.141592653589793
 
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
+bool AskUserToRepeat();
 void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints);
 void CalculateInflections(std::vector<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB, float secsToRepeat);
 float GetSecsToRepeat(std::vector<float> armSpeeds);
@@ -111,9 +112,7 @@ void main()
 			}//end switch
 		}//end Event Loop
 
-
 		UpdateArms(origin, arms, armLines, numArms, timeRunning);
-
 
 		//if (refreshTime.asMilliseconds() > 5.0f) {
 			if ( secsToRepeat > (timeRunning.asSeconds() - .1f) ){
@@ -148,6 +147,18 @@ void main()
 
 		refreshTime += refreshClock.getElapsedTime();
 		timeRunning += clock.getElapsedTime();
+
+		if (timeRunning.asSeconds() > secsToRepeat)
+		{
+			if (AskUserToRepeat())
+			{
+				timeRunning = sf::Time::Zero;
+				Vlines.resize(0);
+				InitializeLineStrip(screenDimensions, armLines, arms, window);
+				UpdateArms(origin, arms, armLines, numArms, timeRunning);
+			}
+		}
+
 		clock.restart();
 	}
 
@@ -232,6 +243,26 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 		colorAlgo = "Confetti";
 	else if (colorScheme == 7)
 		colorAlgo = "Invisible";
+}
+
+bool AskUserToRepeat()
+{
+	bool correct = false;
+	std::string input;
+	while (!correct) {
+		cout << "Enter 'yes' to repeat the graph drawing: ";
+		if (!(std::cin >> input) || !(input.compare("yes") == 0 || input.compare("YES") == 0 ||
+			input.compare("Yes") == 0 || input.compare("y") == 0 ||
+			input.compare("Y") == 0))
+		{
+			cout << "incorrect input! Try again..." << endl;
+		}
+		else {
+			correct = true;
+			return true;
+		}
+	}
+	return false;
 }
 
 void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints) 
