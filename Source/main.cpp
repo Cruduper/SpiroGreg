@@ -24,6 +24,7 @@ float GetSecsToRepeat(std::vector<float> armSpeeds);
 std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms);
 void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &lines, std::vector<Arm> &arms, sf::RenderWindow &window);
 void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms, float timeRunning);
+void UpdateArms(sf::Vector2f origin, std::vector<Arm> &arms, sf::VertexArray &armLines, int numArms, sf::Time timeRunning);
 void ColorAlgorithmHandler(std::vector<sf::Vertex> &Vlines, std::string algoName, float timeRunning, float repeatSecs);
 void setBgrdColor(int &bgColorScheme, sf::Color &bgColor, float timeRunning);
 void ColorAlgoSolid(std::vector<sf::Vertex>& Vlines, sf::Color color);
@@ -72,7 +73,6 @@ void main()
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
 	//GetInflectionPoints(armSpeeds, secsToRepeat, inflectionPoints);
 	InitializeLineStrip(screenDimensions, armLines, arms, window); //creates first arm of spirograph
-	//window.display();//////////////////////////////////////////////////////////////////////////////////////
 
 	sf::Clock clock, refreshClock;
 	sf::Time timeRunning, refreshTime;
@@ -112,12 +112,8 @@ void main()
 		}//end Event Loop
 
 
-		//sets initial position of the endpoint of the first arm
-		armLines[1].position = sf::Vector2f(origin.x + (arms[0].getRadius() * (float)std::cos(timeRunning.asSeconds() * arms[0].getAngularV_Rad() - (PI / 2))),
-			origin.y + (arms[0].getRadius() * (float)std::sin(timeRunning.asSeconds() * arms[0].getAngularV_Rad() - (PI / 2))));
-		armLines[1].color = sf::Color::White;
+		UpdateArms(origin, arms, armLines, numArms, timeRunning);
 
-		CreateLineStrip(armLines, numArms, arms, timeRunning.asSeconds());					//creates arms of spirograph from user's input data
 
 		//if (refreshTime.asMilliseconds() > 5.0f) {
 			if ( secsToRepeat > (timeRunning.asSeconds() - .1f) ){
@@ -358,18 +354,29 @@ float GetSecsToRepeat(std::vector<float> armSpeeds)
 
 
 
-void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &lines, std::vector<Arm> &arms, sf::RenderWindow &window)
+void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &armLines, std::vector<Arm> &arms, sf::RenderWindow &window)
 {
-	lines[0].position = sf::Vector2f(screenDimensions.x / 2.0f, screenDimensions.y / 2.0f);
-	lines[0].color = sf::Color::White;
+	armLines[0].position = sf::Vector2f(screenDimensions.x / 2.0f, screenDimensions.y / 2.0f);
+	armLines[0].color = sf::Color::White;
 
-	lines[1].position = sf::Vector2f(screenDimensions.x / 2.0f, screenDimensions.y / 2.0f - arms[0].getRadius());
-	lines[1].color = sf::Color::White;
+	armLines[1].position = sf::Vector2f(screenDimensions.x / 2.0f, screenDimensions.y / 2.0f - arms[0].getRadius());
+	armLines[1].color = sf::Color::White;
 
-	window.draw(lines);
+	window.draw(armLines);
 	window.display();
 }
 
+void UpdateArms(sf::Vector2f origin, std::vector<Arm> &arms, sf::VertexArray &armLines, int numArms, sf::Time timeRunning)
+{
+		//sets position of the end of the first arm
+	float xPos = origin.x + (arms[0].getRadius() * (float)std::cos(timeRunning.asSeconds() * arms[0].getAngularV_Rad() - (PI / 2)));
+	float yPos = origin.y + (arms[0].getRadius() * (float)std::sin(timeRunning.asSeconds() * arms[0].getAngularV_Rad() - (PI / 2)));
+	armLines[1].position = sf::Vector2f(xPos, yPos);
+	armLines[1].color = sf::Color::White;
+
+		//creates arms of spirograph from user's input data
+	CreateLineStrip(armLines, numArms, arms, timeRunning.asSeconds());		
+}
 
 
 void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms, float timeRunning)
