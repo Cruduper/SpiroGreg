@@ -7,19 +7,22 @@
 
 class Inflection {
 
-public:
-	Inflection();
-	Inflection(float time, std::string type);
-	~Inflection();
-	float getTime();
-	std::string getType();
-	void setTime(float time);
-	void setType(std::string type);
+	public:
+		Inflection();
+		Inflection(float time, std::string type);
+		~Inflection();
+		float getTime();
+		std::string getType();
+		void setTime(float time);
+		void setType(std::string type);
+		friend bool operator<(const Inflection& lhs, const Inflection& rhs);
 
-private:
-	float time;
-	std::string type;
-
+	private:
+		float time;
+		std::string type;
 };
 
-#endif //needed to terminate the #ifndef
+bool operator<(const Inflection& lhs, const Inflection& rhs);
+
+
+#endif

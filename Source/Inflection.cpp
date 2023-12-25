@@ -1,6 +1,7 @@
 
 #include "Inflection.h"
 
+
 Inflection::Inflection()
 {
 	time = 0.0f;
@@ -37,4 +38,9 @@ void Inflection::setTime(float t)
 void Inflection::setType(std::string inflectionType) //types are "coincident" or "reverseCoincident"
 {
 	type = inflectionType;
+}
+
+bool operator<(const Inflection &lhs, const Inflection &rhs) 
+{
+	return lhs.time < rhs.time;
 }
