@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include "Arm.h"
 #include "Inflection.h"
@@ -19,8 +20,8 @@ using std::endl;
 
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
 bool AskUserToRepeat();
-void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints);
-void CalculateInflections(std::vector<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB, float secsToRepeat);
+void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection> &inflectionPoints);
+void CalculateInflections(std::set<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB, float secsToRepeat);
 float GetSecsToRepeat(std::vector<float> armSpeeds);
 std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms);
 void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &lines, std::vector<Arm> &arms, sf::RenderWindow &window);
@@ -53,7 +54,7 @@ void main()
 	std::vector<Arm> arms;	//# rotating arms that make up graph
 	std::vector<float> armSpeeds;
 	std::vector<sf::Vertex> Vlines;
-	std::vector<Inflection> inflectionPoints;
+	std::set<Inflection> inflectionPoints;
 	sf::Clock clock, refreshClock;
 	sf::Time timeRunning, refreshTime;
 	float secsToRepeat;		//seconds it takes to draw entire spirograph pattern, pattern will repeat after this if not stopped
@@ -72,7 +73,7 @@ void main()
 	secsToRepeat = GetSecsToRepeat(armSpeeds);
 
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
-	//GetInflectionPoints(armSpeeds, secsToRepeat, inflectionPoints);
+	GetInflectionPointsSimple(armSpeeds, secsToRepeat, inflectionPoints);
 	InitializeLineStrip(screenDimensions, armLines, arms, window); //creates first arm of spirograph
 
 
@@ -264,95 +265,194 @@ bool AskUserToRepeat()
 	return false;
 }
 
-void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::vector<Inflection> &inflectionPoints) 
-{
-	std::vector<Inflection> comparisonVector;
+//void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection> &inflectionPoints)
+//{
+//	std::vector<Inflection> comparisonVector;
+//
+//	for (int i = 0; i < armSpeeds.size() - 1; i++) {
+//			//add special case for i = 0
+//		CalculateInflections(inflectionPoints, "normal", armSpeeds[i], armSpeeds[i + 1], secsToRepeat);
+//		CalculateInflections(inflectionPoints, "opposite", armSpeeds[i], armSpeeds[i + 1], secsToRepeat);
+//			//1. if i != 0, called CalculateInflections again twice but add comparisonVector instead of inflectionPoints
+//			//2. if inflectionPoints has any values that are not in comparison vector, delete them from inflectionPoints
+//			//2a. if a value in inflectionPoints was "normal" but it shares a value with a comparisonVector entry marked 
+//			//		as opposite, change the inflectionPoints entry to be marked as "opposite"
+//			//3. after going through all possible comparison vectors, and excising bum entries and marking "opposite" 
+//			//		entries correctly, you should have a valid list of inflection points to send to a 3D coloring algorithm
+//			//note: make sure the final list gets turned into a set to de-dupe before going to the 3D coloring algorithm
+//	}
+//}
 
-	for (int i = 0; i < armSpeeds.size() - 1; i++) {
-			//add special case for i = 0
-		CalculateInflections(inflectionPoints, "normal", armSpeeds[i], armSpeeds[i + 1], secsToRepeat);
-		CalculateInflections(inflectionPoints, "opposite", armSpeeds[i], armSpeeds[i + 1], secsToRepeat);
-			//1. if i != 0, called CalculateInflections again twice but add comparisonVector instead of inflectionPoints
-			//2. if inflectionPoints has any values that are not in comparison vector, delete them from inflectionPoints
-			//2a. if a value in inflectionPoints was "normal" but it shares a value with a comparisonVector entry marked 
-			//		as opposite, change the inflectionPoints entry to be marked as "opposite"
-			//3. after going through all possible comparison vectors, and excising bum entries and marking "opposite" 
-			//		entries correctly, you should have a valid list of inflection points to send to a 3D coloring algorithm
-			//note: make sure the final list gets turned into a set to de-dupe before going to the 3D coloring algorithm
-	}
+void GetInflectionPointsSimple(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection> &inflectionPoints)
+{
+	std::vector<float> sineMatchList;
+	std::vector<float> negSineMatchList;
+	std::vector<float> cosMatchList;
+	std::vector<float> negCosMatchList;
+
+	FindMatches(sineMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "sineMinus", "sinePlus");
+	FindMatches(negSineMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "negSineMinus", "negSinePlus");
+	FindMatches(cosMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "cosMinus", "cosPlus");
+	FindMatches(negCosMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "negCosMinus", "negCosPlus");
+	
+	GetMatchesFromLists(inflectionPoints, sineMatchList, cosMatchList, "coincident");
+	GetMatchesFromLists(inflectionPoints, negSineMatchList, negCosMatchList, "reverseCoincident");
 }
 
-void CalculateInflections(
-		std::vector<Inflection> &inflectionPoints, 
-		std::string typeToCalculate, 
-		float armSpeedA, 
-		float armSpeedB, 
-		float secsToRepeat) 
+//void CalculateInflections(
+//		std::set<Inflection> &inflectionPoints,
+//		std::string typeToCalculate, 
+//		float armSpeedA, 
+//		float armSpeedB, 
+//		float secsToRepeat) 
+//{
+//	if (typeToCalculate == "coincident") { //checking for 
+//		std::vector<float> cosineNormalTimeValues;
+//		std::vector<float> sineNormalTimeValues;
+//			// need multiple values here because the equation for t has +/- for both sine and cos :(
+//			// see if there's a way to do this that's easier to read!
+//		float prospectiveCosTime1;
+//		float prospectiveCosTime2;
+//		float prospectiveSineTime1;
+//		float prospectiveSineTime2;
+//		bool cos1Done = false;
+//		bool cos2Done = false;
+//		bool sine1Done = false;
+//		bool sine2Done = false;
+//		for (int i = 0; cos1Done == false || sine1Done == false || cos2Done == false || sine2Done == false; i ++) {
+//				// cos + case
+//			prospectiveCosTime1 = (2 * PI * i) / (armSpeedA + armSpeedB);
+//			if (prospectiveCosTime1 > secsToRepeat) {
+//				cos1Done == true;
+//			} else if (!cos1Done) {
+//				cosineNormalTimeValues.push_back(prospectiveCosTime1);
+//			}
+//				// cos - case
+//			prospectiveCosTime2 = (2 * PI * i) / (armSpeedA - armSpeedB);
+//			if (prospectiveCosTime2 > secsToRepeat) {
+//				cos2Done == true;
+//			}
+//			else if (!cos2Done) {
+//				cosineNormalTimeValues.push_back(prospectiveCosTime2);
+//			}
+//				// sine + case
+//			prospectiveSineTime1 = (2 * PI * i) / (armSpeedA - armSpeedB);
+//			if (prospectiveSineTime1 > secsToRepeat) {
+//				sine1Done == true;
+//			}
+//			else if (!sine1Done) {
+//				sineNormalTimeValues.push_back(prospectiveSineTime1);
+//			}
+//				// sine - case
+//			prospectiveSineTime2 = (2 * PI * i + PI) / (armSpeedA + armSpeedB);
+//			if (prospectiveSineTime2 > secsToRepeat) {
+//				sine2Done == true;
+//			}
+//			else if (!sine2Done) {
+//				sineNormalTimeValues.push_back(prospectiveSineTime2);
+//			}
+//		}
+//
+//		// add inflection points to returning vector only if both sine and cos contain the same time value
+//		// which means that sine and cos both match 
+//		for (int i = 0; i < cosineNormalTimeValues.size(); i++ ) {
+//			if (std::find(sineNormalTimeValues.begin(), sineNormalTimeValues.end(), cosineNormalTimeValues[i]) != sineNormalTimeValues.end()) {
+//				Inflection infl(cosineNormalTimeValues[i], typeToCalculate);
+//				inflectionPoints.insert(infl);
+//			}
+//		}
+//	}
+//	else if (typeToCalculate == "reverseCoincident") {
+//		//Same as above but with different equations. Just make a function!
+//	}
+//	else {
+//		//TODO return error
+//	}
+//}
+
+
+void CalculateInflectionsSimple(
+	std::set<Inflection> &inflectionPoints,
+	float armSpeedA,
+	float armSpeedB,
+	float secsToRepeat)
 {
-	if (typeToCalculate == "normal") { //checking for 
-		std::vector<float> cosineNormalTimeValues;
-		std::vector<float> sineNormalTimeValues;
-			// need multiple values here because the equation for t has +/- for both sine and cos :(
-			// see if there's a way to do this that's easier to read!
-		float prospectiveCosTime1;
-		float prospectiveCosTime2;
-		float prospectiveSineTime1;
-		float prospectiveSineTime2;
-		bool cos1Done = false;
-		bool cos2Done = false;
-		bool sine1Done = false;
-		bool sine2Done = false;
-		for (int i = 0; cos1Done == false || sine1Done == false || cos2Done == false || sine2Done == false; i ++) {
-				// cos + case
-			prospectiveCosTime1 = (2 * PI * i) / (armSpeedA + armSpeedB);
-			if (prospectiveCosTime1 > secsToRepeat) {
-				cos1Done == true;
-			} else if (!cos1Done) {
-				cosineNormalTimeValues.push_back(prospectiveCosTime1);
-			}
-				// cos - case
-			prospectiveCosTime2 = (2 * PI * i) / (armSpeedA - armSpeedB);
-			if (prospectiveCosTime2 > secsToRepeat) {
-				cos2Done == true;
-			}
-			else if (!cos2Done) {
-				cosineNormalTimeValues.push_back(prospectiveCosTime2);
-			}
-				// sine + case
-			prospectiveSineTime1 = (2 * PI * i) / (armSpeedA - armSpeedB);
-			if (prospectiveSineTime1 > secsToRepeat) {
-				sine1Done == true;
-			}
-			else if (!sine1Done) {
-				sineNormalTimeValues.push_back(prospectiveSineTime1);
-			}
-				// sine - case
-			prospectiveSineTime2 = (2 * PI * i + PI) / (armSpeedA + armSpeedB);
-			if (prospectiveSineTime2 > secsToRepeat) {
-				sine2Done == true;
-			}
-			else if (!sine2Done) {
-				sineNormalTimeValues.push_back(prospectiveSineTime2);
+
+}
+
+void GetMatchesFromLists(
+		std::set<Inflection> &inflectionPoints,
+		std::vector<float> listA, 
+		std::vector<float> listB, 
+		std::string matchType)
+{
+	for (int i = 0; i < listA.size(); i++)
+	{
+		for (int j = 0; j < listB.size(); j++)
+		{
+			if (RoundToXDecimals(listA[i], 3) == RoundToXDecimals(listB[i], 3))
+			{
+				inflectionPoints.insert(Inflection(RoundToXDecimals(listA[i], 3), matchType));
+				break;
 			}
 		}
 
-		// add inflection points to returning vector only if both sine and cos contain the same time value
-		// which means that sine and cos both match 
-		for (int i = 0; i < cosineNormalTimeValues.size(); i++ ) {
-			if (std::find(sineNormalTimeValues.begin(), sineNormalTimeValues.end(), cosineNormalTimeValues[i]) != sineNormalTimeValues.end()) {
-				Inflection infl(cosineNormalTimeValues[i], typeToCalculate);
-				inflectionPoints.push_back(infl);
+	}
+}
+
+
+void FindMatches(
+	std::vector<float> matchList, float armSpeedA, float armSpeedB, 
+	float secsToRepeat, std::string formula1, std::string formula2)
+{
+	std::vector<float> matchList;
+	bool formula1Done = false, formula2Done = false;
+
+	int n = 1;
+	float formula1Result;
+	float formula2Result;
+	for (int i = 1; formula1Done && formula2Done; i++)
+	{
+		if (!formula1Done)
+		{
+			formula1Result = GetFormulaResult(formula1, armSpeedA, armSpeedB, i);
+			if (formula1Result > secsToRepeat)
+			{
+				formula1Done == true;
+			}
+			else {
+				matchList.push_back(formula1Result);
+			}
+		}
+		if (!formula2Done)
+		{
+			formula2Result = GetFormulaResult(formula2, armSpeedA, armSpeedB, i);
+			if (formula2Result > secsToRepeat)
+			{
+				formula2Done == true;
+			}
+			else {
+				matchList.push_back(formula2Result);
 			}
 		}
 	}
-	else if (typeToCalculate == "opposite") {
-		//Same as above but with different equations. Just make a function!
-	}
-	else {
-		//TODO return error
-	}
-
 }
+
+
+float GetFormulaResult(std::string formula, float armSpeedA, float armSpeedB, int i)
+{
+	if (formula.compare("sineMinus") == 0 || formula.compare("cosMinus") == 0)
+		return (2 * PI * i) / (armSpeedA - armSpeedB);
+	if (formula.compare("sinePlus") == 0 || formula.compare("negCosPlus") == 0)
+		return (2 * PI * i + PI) / (armSpeedA + armSpeedB);
+	if (formula.compare("cosPlus") == 0 || formula.compare("negSinePlus") == 0)
+		return (2 * PI * i) / (armSpeedA + armSpeedB);
+	if (formula.compare("negSineMinus") == 0 || formula.compare("negCosMinus") == 0)
+		return (2 * PI * i + PI) / (armSpeedA - armSpeedB);
+	
+	return 0;
+}
+
 
 std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms) 
 {
@@ -560,6 +660,12 @@ int LCM(std::vector<int> numbers)
   }
   cout << "LCM = " << lcm << endl << endl;
   return lcm;
+}
+
+float RoundToXDecimals(float num, int x)
+{
+	float multiplier = std::pow(10.0, x);
+	return std::round(num * multiplier) / multiplier;
 }
 
 
