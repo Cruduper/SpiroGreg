@@ -464,13 +464,13 @@ float GetFormulaResult(std::string formula, float armSpeedA, float armSpeedB, in
 {
 	float rtnStr = 0;
 	if (formula.compare("sineMinus") == 0 || formula.compare("cosMinus") == 0)
-		rtnStr = (2 * PI * i) / (armSpeedA - armSpeedB);
+		rtnStr = (2 * PI * i) / (DegToRad(armSpeedA)- DegToRad(armSpeedB));
 	if (formula.compare("sinePlus") == 0 || formula.compare("negCosPlus") == 0)
-		rtnStr = (2 * PI * i + PI) / (armSpeedA + armSpeedB);
+		rtnStr = (2 * PI * i + PI) / (DegToRad(armSpeedA) + DegToRad(armSpeedB));
 	if (formula.compare("cosPlus") == 0 || formula.compare("negSinePlus") == 0)
-		rtnStr = (2 * PI * i) / (armSpeedA + armSpeedB);
+		rtnStr = (2 * PI * i) / (DegToRad(armSpeedA) + DegToRad(armSpeedB));
 	if (formula.compare("negSineMinus") == 0 || formula.compare("negCosMinus") == 0)
-		rtnStr = (2 * PI * i + PI) / (armSpeedA - armSpeedB);
+		rtnStr = (2 * PI * i + PI) / (DegToRad(armSpeedA) - DegToRad(armSpeedB));
 	
 	return rtnStr;
 }
@@ -703,6 +703,12 @@ float RoundToXDecimals(float num, int x)
 {
 	float multiplier = std::pow(10.0, x);
 	return std::round(num * multiplier) / multiplier;
+}
+
+float DegToRad(float deg)
+{
+	float rad = deg * (PI / 180.0);
+	return rad;
 }
 
 
