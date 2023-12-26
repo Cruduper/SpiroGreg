@@ -39,13 +39,14 @@ int GCD(int a, int b);
 int LCM(std::vector<float> numbers);
 float RoundToXDecimals(float num, int x);
 void setColorAlgo(std::string& colorAlgo);
-void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph);
+void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, std::vector<sf::Vertex> &graph3DFront, std::vector<sf::Vertex> &graph3DBack, sf::Vector2f graphPosition, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph);
 void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color);
 void ColorAlgoFireGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
 void ColorAlgoFuschiaGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
 void ColorAlgoRainbowGradient(std::vector<sf::Vertex> &graph, float repeatSecs);
 void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex> &graph, float repeatSecs);
 void ColorAlgoConfetti(std::vector<sf::Vertex> &graph);
+void ColorAlgo3DDefault(std::vector<sf::Vertex>& graph3DFront, std::vector<sf::Vertex>& graph3DBack, const std::set<Inflection>& inflectionPoints, sf::Vector2f graphPosition, float repeatSecs, float timeRunning, int percentComplete);
 
 
 
@@ -59,7 +60,7 @@ void main()
 	std::string colorAlgo = "White";
 	std::vector<Arm> arms;	//# rotating arms that make up graph
 	std::vector<float> armSpeeds;
-	std::vector<sf::Vertex> graph;
+	std::vector<sf::Vertex> graph, graph3DFront, graph3DBack;
 	std::set<Inflection> inflectionPoints;
 	sf::Clock clock, refreshClock;
 	sf::Time timeRunning, refreshTime;
@@ -123,8 +124,14 @@ void main()
 
 		//if (refreshTime.asMilliseconds() > 5.0f) {
 			if ( secsToRepeat > (timeRunning.asSeconds() - .1f) ){
-				graph.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
-				ColorAlgorithmHandler(graph, colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph);
+				if (!is3DGraph) {
+					graph.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
+				}
+				else
+				{
+
+				}
+				ColorAlgorithmHandler(graph, graph3DFront, graph3DBack, sf::Vector2f(armLines[numArms].position), colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph);
 				refreshClock.restart();
 			} else {
 				showArmLines = false;
@@ -160,7 +167,14 @@ void main()
 			if (AskUserToRepeat())
 			{
 				timeRunning = sf::Time::Zero;
-				graph.resize(0);
+				if (is3DGraph)
+				{
+					graph3DFront.resize(0);
+					graph3DBack.resize(0);
+				}
+				else {
+					graph.resize(0);
+				}
 				InitializeLineStrip(screenDimensions, armLines, arms, window);
 				UpdateArms(origin, arms, armLines, numArms, timeRunning);
 			}
@@ -386,6 +400,7 @@ void CalculateInflectionsSimple(
 
 }
 
+
 void GetMatchesFromLists(
 		std::set<Inflection> &inflectionPoints,
 		std::vector<float> listA, 
@@ -417,7 +432,7 @@ void FindMatches(
 	int n = 1;
 	float formula1Result;
 	float formula2Result;
-	for (int i = 1; formula1Done && formula2Done; i++)
+	for (int i = 1; !formula1Done && !formula2Done; i++)
 	{
 		if (!formula1Done)
 		{
@@ -447,16 +462,17 @@ void FindMatches(
 
 float GetFormulaResult(std::string formula, float armSpeedA, float armSpeedB, int i)
 {
+	float rtnStr = 0;
 	if (formula.compare("sineMinus") == 0 || formula.compare("cosMinus") == 0)
-		return (2 * PI * i) / (armSpeedA - armSpeedB);
+		rtnStr = (2 * PI * i) / (armSpeedA - armSpeedB);
 	if (formula.compare("sinePlus") == 0 || formula.compare("negCosPlus") == 0)
-		return (2 * PI * i + PI) / (armSpeedA + armSpeedB);
+		rtnStr = (2 * PI * i + PI) / (armSpeedA + armSpeedB);
 	if (formula.compare("cosPlus") == 0 || formula.compare("negSinePlus") == 0)
-		return (2 * PI * i) / (armSpeedA + armSpeedB);
+		rtnStr = (2 * PI * i) / (armSpeedA + armSpeedB);
 	if (formula.compare("negSineMinus") == 0 || formula.compare("negCosMinus") == 0)
-		return (2 * PI * i + PI) / (armSpeedA - armSpeedB);
+		rtnStr = (2 * PI * i + PI) / (armSpeedA - armSpeedB);
 	
-	return 0;
+	return rtnStr;
 }
 
 
@@ -470,6 +486,7 @@ std::vector<float> SetArmSpeeds(int numArms, std::vector<Arm> arms)
 	}
 	return armSpeeds;
 }
+
 
 float GetSecsToRepeat(std::vector<float> armSpeeds)
 {
@@ -489,7 +506,6 @@ float GetSecsToRepeat(std::vector<float> armSpeeds)
 }
 
 
-
 void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &armLines, std::vector<Arm> &arms, sf::RenderWindow &window)
 {
 	armLines[0].position = sf::Vector2f(screenDimensions.x / 2.0f, screenDimensions.y / 2.0f);
@@ -501,6 +517,7 @@ void InitializeLineStrip(sf::Vector2i screenDimensions, sf::VertexArray &armLine
 	window.draw(armLines);
 	window.display();
 }
+
 
 void UpdateArms(sf::Vector2f origin, std::vector<Arm> &arms, sf::VertexArray &armLines, int numArms, sf::Time timeRunning)
 {
@@ -535,7 +552,10 @@ void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms,
 		//! VERY inefficient to call this function every update for solid colors. Create an isSolidColor switch that makes this
 		//! run only once for solid colors
 void ColorAlgorithmHandler(
-		std::vector<sf::Vertex> &graph, 
+		std::vector<sf::Vertex> &graph,
+		std::vector<sf::Vertex> &graph3DFront,
+		std::vector<sf::Vertex> &graph3DBack,
+		sf::Vector2f graphPosition,
 		std::string algoName, 
 		float timeRunning, 
 		float repeatSecs, 
@@ -544,10 +564,10 @@ void ColorAlgorithmHandler(
 {
 	int percentComplete = (int)(timeRunning / repeatSecs);	//percent of pattern cyle completed out of 1000% max (not 100%)
 
-	//if (is3Dgraph)
-	//{
-	//	ColorAlgo3DDefault()
-	//}
+	if (is3Dgraph)
+	{
+		ColorAlgo3DDefault(graph3DFront, graph3DBack, inflectionPoints, graphPosition, repeatSecs, timeRunning, percentComplete);
+	}
 
 	if ( (algoName.compare("Invisible") == 0) || (algoName.compare("White") == 0) || (algoName.compare("Red") == 0) 
 			|| (algoName.compare("Cyan") == 0) || (algoName.compare("Magenta") == 0) || (algoName.compare("Green") == 0) 
@@ -691,14 +711,14 @@ float RoundToXDecimals(float num, int x)
 
 
 
-/**************************** COLORING ALGORITHMS ****************************/
+/**************************** COLORING ALGORITHMS ****************************/ //!coloring stuff should probably be in its own class
 
-void ColorAlgoSolid(std::vector<sf::Vertex>& graph, sf::Color color)
+void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color)
 {
 	graph[graph.size() - 1].color = color;
 }
 
-void ColorAlgoFireGradient(std::vector<sf::Vertex>& graph, float repeatSecs, int percentComplete)
+void ColorAlgoFireGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete)
 {
 	int red = 255, green = 0, blue = 0;
 	repeatSecs *= 4.44;
@@ -715,7 +735,7 @@ void ColorAlgoFireGradient(std::vector<sf::Vertex>& graph, float repeatSecs, int
 	}
 }
 
-void ColorAlgoFuschiaGradient(std::vector<sf::Vertex>& graph, float repeatSecs, int percentComplete)
+void ColorAlgoFuschiaGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete)
 {
 	int red = 255, green = 0, blue = 128;
 
@@ -761,7 +781,7 @@ void ColorAlgoFuschiaGradient(std::vector<sf::Vertex>& graph, float repeatSecs, 
 	}
 }
 
-void ColorAlgoRainbowGradient(std::vector<sf::Vertex>& graph, float repeatSecs)
+void ColorAlgoRainbowGradient(std::vector<sf::Vertex> &graph, float repeatSecs)
 {
 	int red = 0, green = 0, blue = 0;
 	repeatSecs *= 1.25;	//larger value makes gradient fade between colors slower
@@ -820,7 +840,7 @@ void ColorAlgoRainbowGradient(std::vector<sf::Vertex>& graph, float repeatSecs)
 	}
 }
 
-void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex>& graph, float repeatSecs)
+void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex> &graph, float repeatSecs)
 {
 	int vLength = ((graph.size() - 1) / (int)repeatSecs) % 160;
 
@@ -843,11 +863,58 @@ void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex>& graph, float repeatSecs)
 	return;
 }
 
-void ColorAlgoConfetti(std::vector<sf::Vertex>& graph)
+void ColorAlgoConfetti(std::vector<sf::Vertex> &graph)
 {
 	int red = rand() & 250 + 5;
 	int green = rand() % 250 + 5;
 	int blue = rand() % 250 + 5;
 
 	graph[graph.size() - 1].color = sf::Color(red, green, blue);
+}
+
+void ColorAlgo3DDefault(
+		std::vector<sf::Vertex> &graph3DFront, 
+		std::vector<sf::Vertex> &graph3DBack, 
+		const std::set<Inflection> &inflectionPoints, 
+		sf::Vector2f graphPosition,
+		float repeatSecs, 
+		float timeRunning, 
+		int percentComplete)
+{
+
+	Inflection lowerBoundInflection;
+	Inflection upperBoundInflection;
+	int indexOfLowerBound = 0;
+	float lowerBoundTime = 0;
+	bool intervalFound = false;
+	std::set<Inflection>::iterator itr;
+
+
+	for (itr = inflectionPoints.begin(); itr != inflectionPoints.end() || intervalFound; indexOfLowerBound++)
+	{
+		lowerBoundInflection = *itr;
+		itr++;
+		upperBoundInflection = *itr;
+		if (upperBoundInflection.getTime() > timeRunning)
+		{
+			itr--;
+			lowerBoundTime = lowerBoundInflection.getTime();
+			intervalFound = true;
+			break;
+		}
+	}
+
+	//if the lower bound of the segment (inflectionPoints[i]) is even draw front, if odd draw back
+	if (indexOfLowerBound % 2 != 0)
+	{
+		// draw front
+		graph3DFront.push_back(sf::Vertex(graphPosition));	//creates new vertices (to be colored)
+		graph3DFront[graph3DFront.size() - 1].color = sf::Color::Red;
+	}
+	else 
+	{
+		//draw back
+		graph3DBack.push_back(sf::Vertex(graphPosition));	//creates new vertices (to be colored)
+		graph3DBack[graph3DBack.size() - 1].color = sf::Color::Green;
+	}
 }
