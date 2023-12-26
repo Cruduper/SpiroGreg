@@ -38,6 +38,7 @@ float GCD(std::vector<float> numbers);
 int GCD(int a, int b);
 int LCM(std::vector<float> numbers);
 float RoundToXDecimals(float num, int x);
+float DegToRad(float deg);
 void setColorAlgo(std::string& colorAlgo);
 void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, std::vector<sf::Vertex> &graph3DFront, std::vector<sf::Vertex> &graph3DBack, sf::Vector2f graphPosition, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph);
 void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color);
