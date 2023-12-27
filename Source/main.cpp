@@ -74,6 +74,7 @@ void main()
 	bool takeScreenShot = false;
 	bool is3DGraph = true; //! developer debug variable (for now)
 	bool is3DFront = true;
+	bool isPaused = false;
 
 
 	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "SpiroGreg");
@@ -105,6 +106,15 @@ void main()
 				else if (Event.key.code == sf::Keyboard::B) {
 					bgColorScheme++;
 				}
+				else if (Event.key.code == sf::Keyboard::P) {
+					cout << endl << "PAUSED!!!" << endl;
+					if (isPaused) {
+						isPaused = false;
+					}
+					else {
+						isPaused = true;
+					}
+				}
 				else if (Event.key.code == sf::Keyboard::Down) {
 					setColorAlgo(colorAlgo);
 				}
@@ -123,80 +133,84 @@ void main()
 			}//end switch
 		}//end Event Loop
 
-		UpdateArms(origin, arms, armLines, numArms, timeRunning);
 
-		//if (refreshTime.asMilliseconds() > 5.0f) {
-			if ( secsToRepeat > (timeRunning.asSeconds() - .1f) ){
+		if (!isPaused) {
+			UpdateArms(origin, arms, armLines, numArms, timeRunning);
+
+			//if (refreshTime.asMilliseconds() > 5.0f) {
+			if (secsToRepeat > (timeRunning.asSeconds() - .1f)) {
 				if (!is3DGraph) {
 					graph.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
 				}
 				ColorAlgorithmHandler(graph, graph3DFront, graph3DBack, sf::Vector2f(armLines[numArms].position), colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph, is3DFront);
 				refreshClock.restart();
-			} else {
+			}
+			else {
 				showArmLines = false;
 			}
-		//}
+			//}
 
 
-		if (!is3DGraph)
-		{
-			if (graph.size())
-				window.draw(&graph[0], graph.size(), sf::LinesStrip);
-		}
-		else
-		{
-			if (is3DFront)
+			if (!is3DGraph)
 			{
-				if (graph3DFront.size())
-					window.draw(&graph3DFront[0], graph3DFront.size(), sf::LinesStrip);
-			} 
+				if (graph.size())
+					window.draw(&graph[0], graph.size(), sf::LinesStrip);
+			}
 			else
 			{
-				if (graph3DBack.size())
-					window.draw(&graph3DBack[0], graph3DBack.size(), sf::LinesStrip);
-			}
-		}
-	
-		if ( showArmLines )
-			window.draw(armLines);
-		if ( takeScreenShot ) {
-			sf::Vector2u windowSize = window.getSize();
-			sf::Texture texture;
-			texture.create(windowSize.x, windowSize.y);
-			texture.update(window);
-			sf::Image screenshot = texture.copyToImage();
-			std::stringstream filename;
-			filename << "screenshots/SpiroGreg_" << screenshotNum << ".png";
-			screenshot.saveToFile(filename.str());
-			takeScreenShot = false;
-		}
-		window.display();
-
-		setBgrdColor(bgColorScheme, bgColor, timeRunning.asMilliseconds());
-		window.clear(bgColor);								//clears back buffer 
-
-		refreshTime += refreshClock.getElapsedTime();
-		timeRunning += clock.getElapsedTime();
-
-		if (timeRunning.asSeconds() > secsToRepeat)
-		{
-			if (AskUserToRepeat())
-			{
-				timeRunning = sf::Time::Zero;
-				if (is3DGraph)
+				if (is3DFront)
 				{
-					graph3DFront.resize(0);
-					graph3DBack.resize(0);
+					if (graph3DFront.size())
+						window.draw(&graph3DFront[0], graph3DFront.size(), sf::LinesStrip);
 				}
-				else {
-					graph.resize(0);
+				else
+				{
+					if (graph3DBack.size())
+						window.draw(&graph3DBack[0], graph3DBack.size(), sf::LinesStrip);
 				}
-				InitializeLineStrip(screenDimensions, armLines, arms, window);
-				UpdateArms(origin, arms, armLines, numArms, timeRunning);
 			}
-		}
 
-		clock.restart();
+			if (showArmLines)
+				window.draw(armLines);
+			if (takeScreenShot) {
+				sf::Vector2u windowSize = window.getSize();
+				sf::Texture texture;
+				texture.create(windowSize.x, windowSize.y);
+				texture.update(window);
+				sf::Image screenshot = texture.copyToImage();
+				std::stringstream filename;
+				filename << "screenshots/SpiroGreg_" << screenshotNum << ".png";
+				screenshot.saveToFile(filename.str());
+				takeScreenShot = false;
+			}
+			window.display();
+
+			setBgrdColor(bgColorScheme, bgColor, timeRunning.asMilliseconds());
+			window.clear(bgColor);								//clears back buffer 
+
+			refreshTime += refreshClock.getElapsedTime();
+			timeRunning += clock.getElapsedTime();
+
+			if (timeRunning.asSeconds() > secsToRepeat)
+			{
+				if (AskUserToRepeat())
+				{
+					timeRunning = sf::Time::Zero;
+					if (is3DGraph)
+					{
+						graph3DFront.resize(0);
+						graph3DBack.resize(0);
+					}
+					else {
+						graph.resize(0);
+					}
+					InitializeLineStrip(screenDimensions, armLines, arms, window);
+					UpdateArms(origin, arms, armLines, numArms, timeRunning);
+				}
+			}
+
+			clock.restart();
+		}
 	}
 
 }//end main
@@ -238,7 +252,7 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 	{
 		numArms = 2;
 		arms.push_back(*(new Arm(200, 100)));
-		arms.push_back(*(new Arm(69, 275)));
+		arms.push_back(*(new Arm(69, 100)));
 		colorAlgo = "Fire Gradient";
 
 	}
@@ -368,6 +382,11 @@ void GetInflectionPointsSimple(float armSpeed0, float armSpeed1, float secsToRep
 	FindMatches(negCosMatchList, armSpeed0, armSpeed1, secsToRepeat, "CosMinus180", "CosPlus180");
 	
 	DebugLog("/start");
+	DebugLog("");
+	std::string str = "armSpeed0: " + std::to_string(armSpeed0) + ", armSpeed1: " + std::to_string(armSpeed1);
+	DebugLog(str);
+	DebugLog("");
+	DebugLog("");
 	DebugLog(VectorFloatToString(sineMatchList));
 	DebugLog("/end");
 	DebugLog("/start");
