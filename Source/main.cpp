@@ -76,10 +76,20 @@ void main()
 	bool is3DGraph = true; //! developer debug variable (for now)
 	bool is3DFront = true;
 	bool isPaused = false;
+	float armA, armB;
 
 
 	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "SpiroGreg");
 	GetUserInput(arms, numArms, colorAlgo);
+	if (arms[0].getAngularV_Rad() > arms[1].getAngularV_Rad()) {
+		armA = arms[0].getAngularV_Rad();
+		armB = arms[1].getAngularV_Rad();
+	}
+	else {
+		armA = arms[1].getAngularV_Rad();
+		armB = arms[0].getAngularV_Rad();
+	}
+
 
 		//For arms of spirograph -- linestrips are lines where the end vertex of a line is the starting vertex of the next line
 	sf::VertexArray armLines(sf::LinesStrip, numArms + 1);
@@ -87,9 +97,11 @@ void main()
 	secsToRepeat = GetSecsToRepeat(armSpeeds);
 
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
-	GetInflectionPointsSimple(arms[0].getAngularV_Rad(), arms[1].getAngularV_Rad(), secsToRepeat, inflectionPoints);
+	
+	GetInflectionPointsSimple(armA, armB, secsToRepeat, inflectionPoints);
 	InitializeLineStrip(screenDimensions, armLines, arms, window); //creates first arm of spirograph
 
+	clock.restart();
 
 	while (window.isOpen()){
 		
@@ -111,6 +123,7 @@ void main()
 					cout << endl << endl;
 					if (isPaused) {
 						isPaused = false;
+						clock.restart();
 					}
 					else {
 						isPaused = true;
@@ -139,7 +152,6 @@ void main()
 		if (!isPaused) {
 			UpdateArms(origin, arms, armLines, numArms, timeRunning);
 
-			//if (refreshTime.asMilliseconds() > 5.0f) {
 			if (secsToRepeat > (timeRunning.asSeconds() - .1f)) {
 				if (!is3DGraph) {
 					graph.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
@@ -150,7 +162,6 @@ void main()
 			else {
 				showArmLines = false;
 			}
-			//}
 
 
 			if (!is3DGraph)
@@ -253,8 +264,8 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 	if (isDebugGraph)
 	{
 		numArms = 2;
-		arms.push_back(*(new Arm(200, 45)));
-		arms.push_back(*(new Arm(69, 267)));
+		arms.push_back(*(new Arm(200, 100))); //45
+		arms.push_back(*(new Arm(69, 250)));  //269
 		colorAlgo = "Fire Gradient";
 
 	}
@@ -385,7 +396,7 @@ void ShowPauseScreen(float timeAtPause, std::vector<Arm>& arms)
 //	}
 //}
 
-void GetInflectionPointsSimple(float armSpeed0, float armSpeed1, float secsToRepeat, std::set<Inflection> &inflectionPoints)
+void GetInflectionPointsSimple(float armSpeedA, float armSpeedB, float secsToRepeat, std::set<Inflection> &inflectionPoints)
 {
 	std::vector<float> sineMatchList;
 	std::vector<float> negSineMatchList;
@@ -393,14 +404,14 @@ void GetInflectionPointsSimple(float armSpeed0, float armSpeed1, float secsToRep
 	std::vector<float> negCosMatchList;
 
 
-	FindMatches(sineMatchList, armSpeed0, armSpeed1, secsToRepeat, "sineMinus", "sinePlus");
-	FindMatches(negSineMatchList, armSpeed0, armSpeed1, secsToRepeat, "SineMinus180", "SinePlus180");
-	FindMatches(cosMatchList, armSpeed0, armSpeed1, secsToRepeat, "cosMinus", "cosPlus");
-	FindMatches(negCosMatchList, armSpeed0, armSpeed1, secsToRepeat, "CosMinus180", "CosPlus180");
+	FindMatches(sineMatchList, armSpeedA, armSpeedB, secsToRepeat, "sineMinus", "sinePlus");
+	FindMatches(negSineMatchList, armSpeedA, armSpeedB, secsToRepeat, "SineMinus180", "SinePlus180");
+	FindMatches(cosMatchList, armSpeedA, armSpeedB, secsToRepeat, "cosMinus", "cosPlus");
+	FindMatches(negCosMatchList, armSpeedA, armSpeedB, secsToRepeat, "CosMinus180", "CosPlus180");
 	
 	DebugLog("/start");
 	DebugLog("");
-	std::string str = "armSpeed0: " + std::to_string(armSpeed0) + ", armSpeed1: " + std::to_string(armSpeed1);
+	std::string str = "armSpeed0: " + std::to_string(armSpeedA) + ", armSpeed1: " + std::to_string(armSpeedB);
 	DebugLog(str);
 	DebugLog("");
 	DebugLog("");
@@ -1039,17 +1050,26 @@ void ColorAlgo3DDefault(
 	int indexOfLowerBound = 0;
 	float lowerBoundTime = 0;
 	bool intervalFound = false;
-	std::set<Inflection>::iterator itr;
+	std::set<Inflection>::iterator itrLow = inflectionPoints.begin();
+	std::set<Inflection>::iterator itrHigh = inflectionPoints.begin();
 
-
-	for (itr = inflectionPoints.begin(); itr != inflectionPoints.end() || intervalFound; indexOfLowerBound++)
+	for (; itrLow != inflectionPoints.end() || intervalFound; indexOfLowerBound++, itrLow++)
 	{
-		lowerBoundInflection = *itr;
-		itr++;
-		upperBoundInflection = *itr;
+		if (itrHigh != inflectionPoints.end()) {
+			itrHigh++;
+		}
+
+		lowerBoundInflection = *itrLow;
+
+		if (itrHigh != inflectionPoints.end()) {
+			upperBoundInflection = *itrHigh;
+		} 
+		else {
+			upperBoundInflection = lowerBoundInflection;
+		}
+		
 		if (upperBoundInflection.getTime() > timeRunning)
 		{
-			itr--;
 			lowerBoundTime = lowerBoundInflection.getTime();
 			intervalFound = true;
 			break;
@@ -1057,6 +1077,25 @@ void ColorAlgo3DDefault(
 	}
 
 	//if the lower bound of the segment (inflectionPoints[i]) is even draw front, if odd draw back
+	bool index0 = true, index1 = true, index2 = true, index3 = true, index4 = true;
+	if (indexOfLowerBound == 0 && index0) {
+		index0 = false;
+		DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
+	}
+	if (indexOfLowerBound == 1 && index1) {
+		index1 = false;
+		DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
+	}
+	if (indexOfLowerBound == 2 && index2) {
+		index2 = false;
+		DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
+	}
+	if (indexOfLowerBound == 3 && index3) {
+		index3 = false;
+		DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
+	}
+
+
 	if (indexOfLowerBound % 2 == 0)
 	{
 		is3DFront = true;
@@ -1066,7 +1105,7 @@ void ColorAlgo3DDefault(
 			graph3DFront.push_back(sf::Vertex(graphPosition));
 		}
 
-		graph3DFront.push_back(sf::Vertex(graphPosition));	//creates new vertices (to be colored)
+		graph3DFront.push_back(sf::Vertex(graphPosition));
 		graph3DFront[graph3DFront.size() - 1].color = sf::Color::Red;
 	}
 	else 
@@ -1078,7 +1117,7 @@ void ColorAlgo3DDefault(
 			graph3DBack.push_back(sf::Vertex(graphPosition));
 		}
 
-		graph3DBack.push_back(sf::Vertex(graphPosition));	//creates new vertices (to be colored)
+		graph3DBack.push_back(sf::Vertex(graphPosition));
 		graph3DBack[graph3DBack.size() - 1].color = sf::Color::Green;
 	}
 }
