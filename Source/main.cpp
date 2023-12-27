@@ -40,14 +40,14 @@ int LCM(std::vector<float> numbers);
 float RoundToXDecimals(float num, int x);
 float DegToRad(float deg);
 void setColorAlgo(std::string& colorAlgo);
-void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, std::vector<sf::Vertex> &graph3DFront, std::vector<sf::Vertex> &graph3DBack, sf::Vector2f graphPosition, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph);
+void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, std::vector<sf::Vertex> &graph3DFront, std::vector<sf::Vertex> &graph3DBack, sf::Vector2f graphPosition, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph, bool& is3DFront);
 void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color);
 void ColorAlgoFireGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
 void ColorAlgoFuschiaGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
 void ColorAlgoRainbowGradient(std::vector<sf::Vertex> &graph, float repeatSecs);
 void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex> &graph, float repeatSecs);
 void ColorAlgoConfetti(std::vector<sf::Vertex> &graph);
-void ColorAlgo3DDefault(std::vector<sf::Vertex>& graph3DFront, std::vector<sf::Vertex>& graph3DBack, const std::set<Inflection>& inflectionPoints, sf::Vector2f graphPosition, float repeatSecs, float timeRunning, int percentComplete);
+void ColorAlgo3DDefault(std::vector<sf::Vertex>& graph3DFront, std::vector<sf::Vertex>& graph3DBack, bool& is3DFront, const std::set<Inflection>& inflectionPoints, sf::Vector2f graphPosition, float repeatSecs, float timeRunning, int percentComplete);
 
 
 
@@ -71,6 +71,7 @@ void main()
 	bool showArmLines = true;
 	bool takeScreenShot = false;
 	bool is3DGraph = true; //! developer debug variable (for now)
+	bool is3DFront = true;
 
 
 	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "SpiroGreg");
@@ -84,7 +85,6 @@ void main()
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
 	GetInflectionPointsSimple(armSpeeds, secsToRepeat, inflectionPoints);
 	InitializeLineStrip(screenDimensions, armLines, arms, window); //creates first arm of spirograph
-
 
 
 	while (window.isOpen()){
@@ -128,11 +128,7 @@ void main()
 				if (!is3DGraph) {
 					graph.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
 				}
-				else
-				{
-
-				}
-				ColorAlgorithmHandler(graph, graph3DFront, graph3DBack, sf::Vector2f(armLines[numArms].position), colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph);
+				ColorAlgorithmHandler(graph, graph3DFront, graph3DBack, sf::Vector2f(armLines[numArms].position), colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph, is3DFront);
 				refreshClock.restart();
 			} else {
 				showArmLines = false;
@@ -140,10 +136,27 @@ void main()
 		//}
 
 
-		if ( graph.size() )
-			window.draw(&graph[0], graph.size(), sf::LinesStrip); //draws colored strip
+		if (!is3DGraph)
+		{
+			if (graph.size())
+				window.draw(&graph[0], graph.size(), sf::LinesStrip);
+		}
+		else
+		{
+			if (is3DFront)
+			{
+				if (graph3DFront.size())
+					window.draw(&graph3DFront[0], graph3DFront.size(), sf::LinesStrip);
+			} 
+			else
+			{
+				if (graph3DBack.size())
+					window.draw(&graph3DBack[0], graph3DBack.size(), sf::LinesStrip);
+			}
+		}
+	
 		if ( showArmLines )
-			window.draw(armLines);										//draws arms
+			window.draw(armLines);
 		if ( takeScreenShot ) {
 			sf::Vector2u windowSize = window.getSize();
 			sf::Texture texture;
@@ -195,82 +208,117 @@ void main()
 void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 {
 	Arm* tempArm;
-	bool correct = false;
+	bool isValid = false;
+	std::string debugResponse;
+	bool isDebugGraph = false;
 	float tempSpeed = 0, tempRadius = 0, colorScheme = 0;
 
-	while (!correct){
-		cout << "Enter number of rotating arms (1-4): ";
-		if (!(std::cin >> numArms) || numArms > 4 || numArms < 1)
-			cout << "incorrect input! Try again..." << endl;
-		else
-			correct = true;
-	}
-
-	correct = false;
-
-	for (int i = 0; i < numArms; i++){
-		while (!correct){	
-			cout << "Enter RADIUS for arm #" << i + 1 << " (5 - 200): ";
-			if (!(std::cin >> tempRadius) || tempRadius < 5 || tempRadius > 200)
-				cout << "incorrect input! Try again..." << endl << endl;
-			else
-				correct = true;
+	while (!isValid) {
+		cout << "Do you want to enter default debug graph data? (y/n): ";
+		if (!(std::cin >> debugResponse) || debugResponse.compare("y") == 0 || debugResponse.compare("yes") == 0)
+		{
+			isValid = true;
+			isDebugGraph = true;
+			cout << "setting graph with default variables..." << endl;
 		}
-
-		correct = false;
-
-		while (!correct){
-			cout << "Enter SPEED for arm #" << i + 1 << "(-1080 - 1080): ";
-			if (!(std::cin >> tempSpeed) || tempSpeed < -1080 || tempSpeed > 1080)
-				cout << "incorrect input! Try again..." << endl << endl;
-			else
-				correct = true;
+		else if (debugResponse.compare("n") == 0 || debugResponse.compare("no") == 0)
+		{
+			isValid = true;
+			cout << endl << endl;
 		}
-
-		tempArm = new Arm(tempRadius, tempSpeed);
-		arms.push_back(*tempArm);
-		delete tempArm;
-		correct = false;
-		cout << endl;
-	}
-
-	cout << "White             -- 1" << endl;
-	cout << "Fire Gradient     -- 2" << endl;
-	cout << "Fuschia Gradient  -- 3" << endl;
-	cout << "Rainbow Gradient  -- 4" << endl;
-	cout << "Rainbow Discrete  -- 5" << endl;
-	cout << "Confetti          -- 6" << endl;
-	cout << "Invisible         -- 7" << endl;
-
-	while(!correct){
-		cout << "Enter COLOR SCHEME number (1 - 7): ";
-		if (!(std::cin >> colorScheme) || colorScheme < 1 || colorScheme > 7)
-			cout << "incorrect input! Try again..." << endl;
 		else
-			correct = true;
+		{
+			cout << "incorrect input! Try again..." << endl;
+		}
 	}
 
-	if (colorScheme == 1)
-		colorAlgo = "White";
-	else if (colorScheme == 2)
+	if (isDebugGraph)
+	{
+		numArms = 2;
+		arms.push_back(*(new Arm(200, 100)));
+		arms.push_back(*(new Arm(69, 250)));
 		colorAlgo = "Fire Gradient";
-	else if (colorScheme == 3)
-		colorAlgo = "Fuschia Gradient";
-	else if (colorScheme == 4)
-		colorAlgo = "Rainbow Gradient";
-	else if (colorScheme == 5)
-		colorAlgo = "Rainbow Discrete";
-	else if (colorScheme == 6)
-		colorAlgo = "Confetti";
-	else if (colorScheme == 7)
-		colorAlgo = "Invisible";
+
+	}
+	else
+	{
+		isValid = false;
+
+		while (!isValid) {
+			cout << "Enter number of rotating arms (1-4): ";
+			if (!(std::cin >> numArms) || numArms > 4 || numArms < 1)
+				cout << "incorrect input! Try again..." << endl;
+			else
+				isValid = true;
+		}
+
+		isValid = false;
+
+		for (int i = 0; i < numArms; i++) {
+			while (!isValid) {
+				cout << "Enter RADIUS for arm #" << i + 1 << " (5 - 200): ";
+				if (!(std::cin >> tempRadius) || tempRadius < 5 || tempRadius > 200)
+					cout << "incorrect input! Try again..." << endl << endl;
+				else
+					isValid = true;
+			}
+
+			isValid = false;
+
+			while (!isValid) {
+				cout << "Enter SPEED for arm #" << i + 1 << "(-1080 - 1080): ";
+				if (!(std::cin >> tempSpeed) || tempSpeed < -1080 || tempSpeed > 1080)
+					cout << "incorrect input! Try again..." << endl << endl;
+				else
+					isValid = true;
+			}
+
+			tempArm = new Arm(tempRadius, tempSpeed);
+			arms.push_back(*tempArm); //! need to implement object destruction so we can not just repeat graph, but create new graphs
+			delete tempArm;
+			isValid = false;
+			cout << endl;
+		}
+
+		cout << "White             -- 1" << endl;
+		cout << "Fire Gradient     -- 2" << endl;
+		cout << "Fuschia Gradient  -- 3" << endl;
+		cout << "Rainbow Gradient  -- 4" << endl;
+		cout << "Rainbow Discrete  -- 5" << endl;
+		cout << "Confetti          -- 6" << endl;
+		cout << "Invisible         -- 7" << endl;
+
+		while (!isValid) {
+			cout << "Enter COLOR SCHEME number (1 - 7): ";
+			if (!(std::cin >> colorScheme) || colorScheme < 1 || colorScheme > 7)
+				cout << "incorrect input! Try again..." << endl;
+			else
+				isValid = true;
+		}
+
+		if (colorScheme == 1)
+			colorAlgo = "White";
+		else if (colorScheme == 2)
+			colorAlgo = "Fire Gradient";
+		else if (colorScheme == 3)
+			colorAlgo = "Fuschia Gradient";
+		else if (colorScheme == 4)
+			colorAlgo = "Rainbow Gradient";
+		else if (colorScheme == 5)
+			colorAlgo = "Rainbow Discrete";
+		else if (colorScheme == 6)
+			colorAlgo = "Confetti";
+		else if (colorScheme == 7)
+			colorAlgo = "Invisible";
+	}
 }
+
 
 bool AskUserToRepeat()
 {
-	bool correct = false;
+	bool isValid = false;
 	std::string input;
-	while (!correct) {
+	while (!isValid) {
 		cout << "Enter 'yes' to repeat the graph drawing: ";
 		if (!(std::cin >> input) || !(input.compare("yes") == 0 || input.compare("YES") == 0 ||
 			input.compare("Yes") == 0 || input.compare("y") == 0 ||
@@ -279,7 +327,7 @@ bool AskUserToRepeat()
 			cout << "incorrect input! Try again..." << endl;
 		}
 		else {
-			correct = true;
+			isValid = true;
 			return true;
 		}
 	}
@@ -311,11 +359,19 @@ void GetInflectionPointsSimple(std::vector<float> armSpeeds, float secsToRepeat,
 	std::vector<float> cosMatchList;
 	std::vector<float> negCosMatchList;
 
+
 	FindMatches(sineMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "sineMinus", "sinePlus");
 	FindMatches(negSineMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "negSineMinus", "negSinePlus");
 	FindMatches(cosMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "cosMinus", "cosPlus");
 	FindMatches(negCosMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "negCosMinus", "negCosPlus");
 	
+	DebugLog("/start");
+	DebugLog(VectorFloatToString(sineMatchList));
+	DebugLog("/end");
+	DebugLog("/start");
+	DebugLog(VectorFloatToString(cosMatchList));
+	DebugLog("/end");
+
 	GetMatchesFromLists(inflectionPoints, sineMatchList, cosMatchList, "coincident");
 	GetMatchesFromLists(inflectionPoints, negSineMatchList, negCosMatchList, "reverseCoincident");
 }
@@ -412,7 +468,7 @@ void GetMatchesFromLists(
 	{
 		for (int j = 0; j < listB.size(); j++)
 		{
-			if (RoundToXDecimals(listA[i], 3) == RoundToXDecimals(listB[i], 3))
+			if (RoundToXDecimals(listA[i], 3) == RoundToXDecimals(listB[j], 3))
 			{
 				Inflection newInflection = Inflection::Inflection(RoundToXDecimals(listA[i], 3), matchType);
 				inflectionPoints.insert(newInflection);
@@ -425,35 +481,53 @@ void GetMatchesFromLists(
 
 
 void FindMatches(
-	std::vector<float> &matchList, float armSpeedA, float armSpeedB, 
-	float secsToRepeat, std::string formula1, std::string formula2)
+		std::vector<float> &matchList, 
+		float armSpeedA, 
+		float armSpeedB, 
+		float secsToRepeat, 
+		std::string formula1, 
+		std::string formula2 
+	 )
 {
-	bool formula1Done = false, formula2Done = false;
+	bool isFormula1Done = false, isFormula2Done = false;
+	bool hasFormula1Pushed = false, hasFormula2Pushed = false;
 
 	int n = 1;
 	float formula1Result;
 	float formula2Result;
-	for (int i = 1; !formula1Done && !formula2Done; i++)
+	for (int i = 1; !isFormula1Done && !isFormula2Done; i++)
 	{
-		if (!formula1Done)
+		if (!isFormula1Done)
 		{
 			formula1Result = GetFormulaResult(formula1, armSpeedA, armSpeedB, i);
-			if (formula1Result > secsToRepeat)
+			if (formula1Result >= secsToRepeat)
 			{
-				formula1Done == true;
+				isFormula1Done = true;
+				if (!hasFormula2Pushed)
+				{
+					isFormula2Done = true;
+				}
 			}
-			else {
+			else if (formula1Result > 0)
+			{
+				hasFormula1Pushed = true;
 				matchList.push_back(formula1Result);
 			}
 		}
-		if (!formula2Done)
+		if (!isFormula2Done)
 		{
 			formula2Result = GetFormulaResult(formula2, armSpeedA, armSpeedB, i);
-			if (formula2Result > secsToRepeat)
+			if (formula2Result >= secsToRepeat)
 			{
-				formula2Done == true;
+				isFormula2Done = true;
+				if (!hasFormula1Pushed)
+				{
+					isFormula1Done = true;
+				}
 			}
-			else {
+			else if (formula2Result > 0) 
+			{
+				hasFormula2Pushed = true;
 				matchList.push_back(formula2Result);
 			}
 		}
@@ -465,7 +539,7 @@ float GetFormulaResult(std::string formula, float armSpeedA, float armSpeedB, in
 {
 	float rtnStr = 0;
 	if (formula.compare("sineMinus") == 0 || formula.compare("cosMinus") == 0)
-		rtnStr = (2 * PI * i) / (DegToRad(armSpeedA)- DegToRad(armSpeedB));
+		rtnStr = (2 * PI * i) / (DegToRad(armSpeedA) - DegToRad(armSpeedB));
 	if (formula.compare("sinePlus") == 0 || formula.compare("negCosPlus") == 0)
 		rtnStr = (2 * PI * i + PI) / (DegToRad(armSpeedA) + DegToRad(armSpeedB));
 	if (formula.compare("cosPlus") == 0 || formula.compare("negSinePlus") == 0)
@@ -561,13 +635,15 @@ void ColorAlgorithmHandler(
 		float timeRunning, 
 		float repeatSecs, 
 		std::set<Inflection>& inflectionPoints,
-		bool is3Dgraph)
+		bool is3Dgraph,
+		bool& is3DFront)
 {
 	int percentComplete = (int)(timeRunning / repeatSecs);	//percent of pattern cyle completed out of 1000% max (not 100%)
 
 	if (is3Dgraph)
 	{
-		ColorAlgo3DDefault(graph3DFront, graph3DBack, inflectionPoints, graphPosition, repeatSecs, timeRunning, percentComplete);
+		ColorAlgo3DDefault(graph3DFront, graph3DBack, is3DFront, inflectionPoints, graphPosition, repeatSecs, timeRunning, percentComplete);
+		return;
 	}
 
 	if ( (algoName.compare("Invisible") == 0) || (algoName.compare("White") == 0) || (algoName.compare("Red") == 0) 
@@ -882,6 +958,7 @@ void ColorAlgoConfetti(std::vector<sf::Vertex> &graph)
 void ColorAlgo3DDefault(
 		std::vector<sf::Vertex> &graph3DFront, 
 		std::vector<sf::Vertex> &graph3DBack, 
+		bool& is3DFront,
 		const std::set<Inflection> &inflectionPoints, 
 		sf::Vector2f graphPosition,
 		float repeatSecs, 
@@ -912,15 +989,27 @@ void ColorAlgo3DDefault(
 	}
 
 	//if the lower bound of the segment (inflectionPoints[i]) is even draw front, if odd draw back
-	if (indexOfLowerBound % 2 != 0)
+	if (indexOfLowerBound % 2 == 0)
 	{
-		// draw front
+		is3DFront = true;
+
+		if (graph3DFront.size() == 0)
+		{
+			graph3DFront.push_back(sf::Vertex(graphPosition));
+		}
+
 		graph3DFront.push_back(sf::Vertex(graphPosition));	//creates new vertices (to be colored)
 		graph3DFront[graph3DFront.size() - 1].color = sf::Color::Red;
 	}
 	else 
 	{
-		//draw back
+		is3DFront = false;
+
+		if (graph3DBack.size() == 0)
+		{
+			graph3DBack.push_back(sf::Vertex(graphPosition));
+		}
+
 		graph3DBack.push_back(sf::Vertex(graphPosition));	//creates new vertices (to be colored)
 		graph3DBack[graph3DBack.size() - 1].color = sf::Color::Green;
 	}
