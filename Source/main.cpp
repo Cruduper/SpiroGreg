@@ -39,6 +39,7 @@ int GCD(int a, int b);
 int LCM(std::vector<float> numbers);
 float RoundToXDecimals(float num, int x);
 float DegToRad(float deg);
+void DebugLog(std::string input, std::string = "Debug Log");
 void setColorAlgo(std::string& colorAlgo);
 void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, std::vector<sf::Vertex> &graph3DFront, std::vector<sf::Vertex> &graph3DBack, sf::Vector2f graphPosition, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph, bool& is3DFront);
 void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color);
@@ -365,12 +366,12 @@ void GetInflectionPointsSimple(std::vector<float> armSpeeds, float secsToRepeat,
 	FindMatches(cosMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "cosMinus", "cosPlus");
 	FindMatches(negCosMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "negCosMinus", "negCosPlus");
 	
-	DebugLog("/start");
-	DebugLog(VectorFloatToString(sineMatchList));
-	DebugLog("/end");
-	DebugLog("/start");
-	DebugLog(VectorFloatToString(cosMatchList));
-	DebugLog("/end");
+	//DebugLog("/start");
+	//DebugLog(VectorFloatToString(sineMatchList));
+	//DebugLog("/end");
+	//DebugLog("/start");
+	//DebugLog(VectorFloatToString(cosMatchList));
+	//DebugLog("/end");
 
 	GetMatchesFromLists(inflectionPoints, sineMatchList, cosMatchList, "coincident");
 	GetMatchesFromLists(inflectionPoints, negSineMatchList, negCosMatchList, "reverseCoincident");
@@ -788,6 +789,18 @@ float DegToRad(float deg)
 	return rad;
 }
 
+void DebugLog(std::string input, std::string titleText)
+{
+	if (input.compare("/start") == 0) {
+		cout << endl << "***************" + titleText + " * **************" << endl << endl;
+	}
+	else if (input.compare("/end") == 0) {
+		cout << endl << endl << "*****************************************" << endl;
+	}
+	else {
+		cout << input << endl;
+	}
+}
 
 
 
