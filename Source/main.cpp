@@ -20,7 +20,7 @@ using std::endl;
 
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
 bool AskUserToRepeat();
-void GetInflectionPointsSimple(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection>& inflectionPoints);
+void GetInflectionPointsSimple(float armSpeed0, float armSpeed1, float secsToRepeat, std::set<Inflection>& inflectionPoints);
 //void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection> &inflectionPoints);
 //void CalculateInflections(std::set<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB, float secsToRepeat);
 float GetSecsToRepeat(std::vector<float> armSpeeds);
@@ -85,7 +85,7 @@ void main()
 	secsToRepeat = GetSecsToRepeat(armSpeeds);
 
 	cout << "Seconds before repeat = " << secsToRepeat << endl;
-	GetInflectionPointsSimple(armSpeeds, secsToRepeat, inflectionPoints);
+	GetInflectionPointsSimple(arms[0].getAngularV_Rad(), arms[1].getAngularV_Rad(), secsToRepeat, inflectionPoints);
 	InitializeLineStrip(screenDimensions, armLines, arms, window); //creates first arm of spirograph
 
 
@@ -238,7 +238,7 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 	{
 		numArms = 2;
 		arms.push_back(*(new Arm(200, 100)));
-		arms.push_back(*(new Arm(69, 250)));
+		arms.push_back(*(new Arm(69, 275)));
 		colorAlgo = "Fire Gradient";
 
 	}
@@ -354,7 +354,7 @@ bool AskUserToRepeat()
 //	}
 //}
 
-void GetInflectionPointsSimple(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection> &inflectionPoints)
+void GetInflectionPointsSimple(float armSpeed0, float armSpeed1, float secsToRepeat, std::set<Inflection> &inflectionPoints)
 {
 	std::vector<float> sineMatchList;
 	std::vector<float> negSineMatchList;
@@ -362,17 +362,17 @@ void GetInflectionPointsSimple(std::vector<float> armSpeeds, float secsToRepeat,
 	std::vector<float> negCosMatchList;
 
 
-	FindMatches(sineMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "sineMinus", "sinePlus");
-	FindMatches(negSineMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "negSineMinus", "negSinePlus");
-	FindMatches(cosMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "cosMinus", "cosPlus");
-	FindMatches(negCosMatchList, armSpeeds[0], armSpeeds[1], secsToRepeat, "negCosMinus", "negCosPlus");
+	FindMatches(sineMatchList, armSpeed0, armSpeed1, secsToRepeat, "sineMinus", "sinePlus");
+	FindMatches(negSineMatchList, armSpeed0, armSpeed1, secsToRepeat, "SineMinus180", "SinePlus180");
+	FindMatches(cosMatchList, armSpeed0, armSpeed1, secsToRepeat, "cosMinus", "cosPlus");
+	FindMatches(negCosMatchList, armSpeed0, armSpeed1, secsToRepeat, "CosMinus180", "CosPlus180");
 	
-	//DebugLog("/start");
-	//DebugLog(VectorFloatToString(sineMatchList));
-	//DebugLog("/end");
-	//DebugLog("/start");
-	//DebugLog(VectorFloatToString(cosMatchList));
-	//DebugLog("/end");
+	DebugLog("/start");
+	DebugLog(VectorFloatToString(sineMatchList));
+	DebugLog("/end");
+	DebugLog("/start");
+	DebugLog(VectorFloatToString(cosMatchList));
+	DebugLog("/end");
 
 	GetMatchesFromLists(inflectionPoints, sineMatchList, cosMatchList, "coincident");
 	GetMatchesFromLists(inflectionPoints, negSineMatchList, negCosMatchList, "reverseCoincident");
@@ -541,13 +541,13 @@ float GetFormulaResult(std::string formula, float armSpeedA, float armSpeedB, in
 {
 	float rtnStr = 0;
 	if (formula.compare("sineMinus") == 0 || formula.compare("cosMinus") == 0)
-		rtnStr = (2 * PI * i) / (DegToRad(armSpeedA) - DegToRad(armSpeedB));
-	if (formula.compare("sinePlus") == 0 || formula.compare("negCosPlus") == 0)
-		rtnStr = (2 * PI * i + PI) / (DegToRad(armSpeedA) + DegToRad(armSpeedB));
-	if (formula.compare("cosPlus") == 0 || formula.compare("negSinePlus") == 0)
-		rtnStr = (2 * PI * i) / (DegToRad(armSpeedA) + DegToRad(armSpeedB));
-	if (formula.compare("negSineMinus") == 0 || formula.compare("negCosMinus") == 0)
-		rtnStr = (2 * PI * i + PI) / (DegToRad(armSpeedA) - DegToRad(armSpeedB));
+		rtnStr = (2 * PI * i) / (armSpeedA - armSpeedB);
+	if (formula.compare("sinePlus") == 0 || formula.compare("CosPlus180") == 0)
+		rtnStr = (2 * PI * i + PI) / (armSpeedA + armSpeedB);
+	if (formula.compare("cosPlus") == 0 || formula.compare("SinePlus180") == 0)
+		rtnStr = (2 * PI * i) / (armSpeedA + armSpeedB);
+	if (formula.compare("SineMinus180") == 0 || formula.compare("CosMinus180") == 0)
+		rtnStr = (2 * PI * i + PI) / (armSpeedA - armSpeedB);
 	
 	return rtnStr;
 }
@@ -728,7 +728,7 @@ float EuclideanAlgo(float num, float denom)
 	float a(abs(num));			//abs() won't make this *particular* program incorrect, - and + speed arms end at same starting
 	float d(abs(denom));		//point. Need abs() for negative speed values to work in algo, may be incorrect if used in other apps??
 	float q = 0;
-  float r;
+	float r;
 
 	if (a == 0) 
 		return d;
@@ -811,7 +811,7 @@ std::string VectorFloatToString(std::vector<float> vec)
 void DebugLog(std::string input, std::string titleText)
 {
 	if (input.compare("/start") == 0) {
-		cout << endl << "***************" + titleText + " * **************" << endl << endl;
+		cout << endl << "*************** " + titleText + " ***************" << endl << endl;
 	}
 	else if (input.compare("/end") == 0) {
 		cout << endl << endl << "*****************************************" << endl;
