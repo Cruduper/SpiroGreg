@@ -20,6 +20,7 @@ using std::endl;
 
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
 bool AskUserToRepeat();
+void ShowPauseScreen(float timeAtPause, std::vector<Arm>& arms);
 void GetInflectionPointsSimple(float armSpeed0, float armSpeed1, float secsToRepeat, std::set<Inflection>& inflectionPoints);
 //void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection> &inflectionPoints);
 //void CalculateInflections(std::set<Inflection> &inflectionPoints, std::string typeToCalculate, float armSpeedA, float armSpeedB, float secsToRepeat);
@@ -107,12 +108,13 @@ void main()
 					bgColorScheme++;
 				}
 				else if (Event.key.code == sf::Keyboard::P) {
-					cout << endl << "PAUSED!!!" << endl;
+					cout << endl << endl;
 					if (isPaused) {
 						isPaused = false;
 					}
 					else {
 						isPaused = true;
+						ShowPauseScreen(timeRunning.asSeconds(), arms);
 					}
 				}
 				else if (Event.key.code == sf::Keyboard::Down) {
@@ -251,8 +253,8 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 	if (isDebugGraph)
 	{
 		numArms = 2;
-		arms.push_back(*(new Arm(200, 100)));
-		arms.push_back(*(new Arm(69, 100)));
+		arms.push_back(*(new Arm(200, 45)));
+		arms.push_back(*(new Arm(69, 267)));
 		colorAlgo = "Fire Gradient";
 
 	}
@@ -348,6 +350,21 @@ bool AskUserToRepeat()
 		}
 	}
 	return false;
+}
+
+
+void ShowPauseScreen(float timeAtPause, std::vector<Arm>& arms)
+{
+	DebugLog("/start", "PAUSE SCREEN");
+	DebugLog("");
+	std::string str;
+	str += " sin(arm0): " + std::to_string(std::sin(arms[0].getAngularV_Rad() * timeAtPause)) + "\n";
+	str += " cos(arm0): " + std::to_string(std::cos(arms[0].getAngularV_Rad() * timeAtPause)) + "\n";
+	str += " sin(arm1): " + std::to_string(std::sin(arms[1].getAngularV_Rad() * timeAtPause)) + "\n";
+	str += " cos(arm1): " + std::to_string(std::cos(arms[1].getAngularV_Rad() * timeAtPause)) + "\n";
+	DebugLog(str);	
+	DebugLog("\n Pause time (s): " + std::to_string(timeAtPause));
+	DebugLog("/end");
 }
 
 //void GetInflectionPoints(std::vector<float> armSpeeds, float secsToRepeat, std::set<Inflection> &inflectionPoints)
