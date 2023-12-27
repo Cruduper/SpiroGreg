@@ -39,6 +39,7 @@ int GCD(int a, int b);
 int LCM(std::vector<float> numbers);
 float RoundToXDecimals(float num, int x);
 float DegToRad(float deg);
+std::string VectorFloatToString(std::vector<float> vec);
 void DebugLog(std::string input, std::string = "Debug Log");
 void setColorAlgo(std::string& colorAlgo);
 void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, std::vector<sf::Vertex> &graph3DFront, std::vector<sf::Vertex> &graph3DBack, sf::Vector2f graphPosition, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph, bool& is3DFront);
@@ -787,6 +788,24 @@ float DegToRad(float deg)
 {
 	float rad = deg * (PI / 180.0);
 	return rad;
+}
+
+std::string VectorFloatToString(std::vector<float> vec)
+{
+	std::string rtnStr = "";
+	bool first = true;
+
+	for (float num : vec) {
+		if (!first) {
+			rtnStr += ", ";
+		}
+		else {
+			first = false;
+		}
+		rtnStr += std::to_string(num);
+	}
+
+	return rtnStr;
 }
 
 void DebugLog(std::string input, std::string titleText)
