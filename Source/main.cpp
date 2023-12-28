@@ -39,6 +39,7 @@ float GCD(std::vector<float> numbers);
 int GCD(int a, int b);
 int LCM(std::vector<float> numbers);
 float RoundToXDecimals(float num, int x);
+void PauseForXMilliseconds(sf::Clock& clock, int x);
 float DegToRad(float deg);
 std::string VectorFloatToString(std::vector<float> vec);
 void DebugLog(std::string input, std::string = "Debug Log");
@@ -778,6 +779,16 @@ float RoundToXDecimals(float num, int x)
 {
 	float multiplier = std::pow(10.0, x);
 	return std::round(num * multiplier) / multiplier;
+}
+
+void PauseForXMilliseconds(sf::Clock& clock, int x)
+{
+	sf::Time startTime = clock.getElapsedTime();
+
+	for (int i = 0; (clock.getElapsedTime() - startTime) < sf::milliseconds(x); )
+	{
+		i++;
+	}
 }
 
 float DegToRad(float deg)
