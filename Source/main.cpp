@@ -11,7 +11,6 @@
 
 
 
-
 using std::cout;
 using std::endl;
 
@@ -47,15 +46,14 @@ float DegToRad(float deg);
 std::string VectorFloatToString(std::vector<float> vec);
 void DebugLog(std::string input, std::string = "Debug Log");
 void setColorAlgo(std::string& colorAlgo);
-void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, sf::Vertex& newPixel, sf::Vector2f graphPosition, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph, bool& is3DFront);
+void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, sf::Vertex& newPixel, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph, bool& is3DFront);
 void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color);
 void ColorAlgoFireGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
 void ColorAlgoFuschiaGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
 void ColorAlgoRainbowGradient(std::vector<sf::Vertex> &graph, float repeatSecs);
 void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex> &graph, float repeatSecs);
 void ColorAlgoConfetti(std::vector<sf::Vertex> &graph);
-void ColorAlgo3DDefault(sf::Vertex& newPixel, bool& is3DFront, const std::set<Inflection>& inflectionPoints, sf::Vector2f graphPosition, float repeatSecs, float timeRunning, int percentComplete);
-
+void ColorAlgo3DDefault(sf::Vertex& newPixel, bool& is3DFront, const std::set<Inflection>& inflectionPoints, float repeatSecs, float timeRunning, int percentComplete);
 
 
 
@@ -169,7 +167,7 @@ void main()
 				}
 				sf::Vertex newPixel = sf::Vertex(sf::Vector2f(armLines[numArms].position));
 				bool inflectionSwitch = is3DFront;
-				ColorAlgorithmHandler(graph, newPixel, sf::Vector2f(armLines[numArms].position), colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph, is3DFront);
+				ColorAlgorithmHandler(graph, newPixel, colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph, is3DFront);
 				if (is3DGraph)
 				{
 					if (inflectionSwitch != is3DFront) {
@@ -759,28 +757,6 @@ void setBgrdColor(int &bgColorScheme, sf::Color &color, float timeRunning)
 	}
 }
 
-
-		//placeholder til you can design a pop-up menu for user to choose color
-void setColorAlgo(std::string &colorAlgo)
-{
-	if (colorAlgo == "White")
-		colorAlgo = "Fire Gradient";
-	else if (colorAlgo == "Fire Gradient")
-		colorAlgo = "Fuschia Gradient";
-	else if (colorAlgo == "Fuschia Gradient")
-		colorAlgo = "Rainbow Gradient";
-	else if (colorAlgo == "Rainbow Gradient")
-		colorAlgo = "Rainbow Discrete";
-	else if (colorAlgo == "Rainbow Discrete")
-		colorAlgo = "Confetti";
-	else if (colorAlgo == "Confetti")
-		colorAlgo = "White";
-	else
-		colorAlgo = "Green";
-}
-
-
-
 		//Euclidean algorithm. Requires positive numbers to work. abs() workaround explained below...
 float EuclideanAlgo(float num, float denom) 
 {
@@ -906,7 +882,6 @@ void DebugLog(std::string input, std::string titleText)
 void ColorAlgorithmHandler(
 	std::vector<sf::Vertex>& graph,
 	sf::Vertex& newPixel,
-	sf::Vector2f graphPosition,
 	std::string algoName,
 	float timeRunning,
 	float repeatSecs,
@@ -918,7 +893,7 @@ void ColorAlgorithmHandler(
 
 	if (is3Dgraph)
 	{
-		ColorAlgo3DDefault(newPixel, is3DFront, inflectionPoints, graphPosition, repeatSecs, timeRunning, percentComplete);
+		ColorAlgo3DDefault(newPixel, is3DFront, inflectionPoints, repeatSecs, timeRunning, percentComplete);
 		return;
 	}
 
@@ -954,6 +929,26 @@ void ColorAlgorithmHandler(
 		return;
 	}
 }//end Color Algo
+
+
+		//placeholder til you can design a pop-up menu for user to choose color
+void setColorAlgo(std::string& colorAlgo)
+{
+	if (colorAlgo == "White")
+		colorAlgo = "Fire Gradient";
+	else if (colorAlgo == "Fire Gradient")
+		colorAlgo = "Fuschia Gradient";
+	else if (colorAlgo == "Fuschia Gradient")
+		colorAlgo = "Rainbow Gradient";
+	else if (colorAlgo == "Rainbow Gradient")
+		colorAlgo = "Rainbow Discrete";
+	else if (colorAlgo == "Rainbow Discrete")
+		colorAlgo = "Confetti";
+	else if (colorAlgo == "Confetti")
+		colorAlgo = "White";
+	else
+		colorAlgo = "Green";
+}
 
 
 void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color)
@@ -1119,7 +1114,6 @@ void ColorAlgo3DDefault(
 		sf::Vertex& newPixel,
 		bool& is3DFront,
 		const std::set<Inflection> &inflectionPoints, 
-		sf::Vector2f graphPosition,
 		float repeatSecs, 
 		float timeRunning, 
 		int percentComplete)
