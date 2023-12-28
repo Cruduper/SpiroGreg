@@ -157,6 +157,8 @@ void main()
 					graph.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
 				}
 				ColorAlgorithmHandler(graph, graph3DFront, graph3DBack, sf::Vector2f(armLines[numArms].position), colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph, is3DFront);
+				//int iRand = (rand() % 230) + 1;
+				//PauseForXMilliseconds(clock, iRand);
 				refreshClock.restart();
 			}
 			else {
@@ -673,60 +675,7 @@ void CreateLineStrip(sf::VertexArray &lines, int numArms, std::vector<Arm> arms,
 }
 
 
-		//! VERY inefficient to call this function every update for solid colors. Create an isSolidColor switch that makes this
-		//! run only once for solid colors
-void ColorAlgorithmHandler(
-		std::vector<sf::Vertex> &graph,
-		std::vector<sf::Vertex> &graph3DFront,
-		std::vector<sf::Vertex> &graph3DBack,
-		sf::Vector2f graphPosition,
-		std::string algoName, 
-		float timeRunning, 
-		float repeatSecs, 
-		std::set<Inflection>& inflectionPoints,
-		bool is3Dgraph,
-		bool& is3DFront)
-{
-	int percentComplete = (int)(timeRunning / repeatSecs);	//percent of pattern cyle completed out of 1000% max (not 100%)
 
-	if (is3Dgraph)
-	{
-		ColorAlgo3DDefault(graph3DFront, graph3DBack, is3DFront, inflectionPoints, graphPosition, repeatSecs, timeRunning, percentComplete);
-		return;
-	}
-
-	if ( (algoName.compare("Invisible") == 0) || (algoName.compare("White") == 0) || (algoName.compare("Red") == 0) 
-			|| (algoName.compare("Cyan") == 0) || (algoName.compare("Magenta") == 0) || (algoName.compare("Green") == 0) 
-			|| (algoName.compare("Yellow") == 0) || (algoName.compare("Orange") == 0) || (algoName.compare("Grey") == 0) ) { 
-		ColorAlgoSolid(graph, sf::Color::Transparent);
-		return;
-	}
-
-	if (algoName.compare("Fire Gradient") == 0){
-		ColorAlgoFireGradient(graph, repeatSecs, percentComplete);
-		return;
-	}
-
-	if (algoName.compare("Fuschia Gradient") == 0){
-		ColorAlgoFuschiaGradient(graph, repeatSecs, percentComplete);
-		return;
-	}
-
-	if (algoName.compare("Rainbow Gradient") == 0){
-		ColorAlgoRainbowGradient(graph, repeatSecs);
-		return;
-	}
-
-	if (algoName.compare("Rainbow Discrete") == 0){
-		ColorAlgoRainbowDiscrete(graph, repeatSecs);
-		return;
-	}
-
-	if (algoName.compare("Confetti") == 0){
-		ColorAlgoConfetti(graph);
-		return;
-	}
-}//end Color Algo
 
 
 void setBgrdColor(int &bgColorScheme, sf::Color &color, float timeRunning)
@@ -874,6 +823,62 @@ void DebugLog(std::string input, std::string titleText)
 
 
 /**************************** COLORING ALGORITHMS ****************************/ //!coloring stuff should probably be in its own class
+
+		//! VERY inefficient to call this function every update for solid colors. Create an isSolidColor switch that makes this
+		//! run only once for solid colors
+void ColorAlgorithmHandler(
+	std::vector<sf::Vertex>& graph,
+	std::vector<sf::Vertex>& graph3DFront,
+	std::vector<sf::Vertex>& graph3DBack,
+	sf::Vector2f graphPosition,
+	std::string algoName,
+	float timeRunning,
+	float repeatSecs,
+	std::set<Inflection>& inflectionPoints,
+	bool is3Dgraph,
+	bool& is3DFront)
+{
+	int percentComplete = (int)(timeRunning / repeatSecs);	//percent of pattern cyle completed out of 1000% max (not 100%)
+
+	if (is3Dgraph)
+	{
+		ColorAlgo3DDefault(graph3DFront, graph3DBack, is3DFront, inflectionPoints, graphPosition, repeatSecs, timeRunning, percentComplete);
+		return;
+	}
+
+	if ((algoName.compare("Invisible") == 0) || (algoName.compare("White") == 0) || (algoName.compare("Red") == 0)
+		|| (algoName.compare("Cyan") == 0) || (algoName.compare("Magenta") == 0) || (algoName.compare("Green") == 0)
+		|| (algoName.compare("Yellow") == 0) || (algoName.compare("Orange") == 0) || (algoName.compare("Grey") == 0)) {
+		ColorAlgoSolid(graph, sf::Color::Transparent);
+		return;
+	}
+
+	if (algoName.compare("Fire Gradient") == 0) {
+		ColorAlgoFireGradient(graph, repeatSecs, percentComplete);
+		return;
+	}
+
+	if (algoName.compare("Fuschia Gradient") == 0) {
+		ColorAlgoFuschiaGradient(graph, repeatSecs, percentComplete);
+		return;
+	}
+
+	if (algoName.compare("Rainbow Gradient") == 0) {
+		ColorAlgoRainbowGradient(graph, repeatSecs);
+		return;
+	}
+
+	if (algoName.compare("Rainbow Discrete") == 0) {
+		ColorAlgoRainbowDiscrete(graph, repeatSecs);
+		return;
+	}
+
+	if (algoName.compare("Confetti") == 0) {
+		ColorAlgoConfetti(graph);
+		return;
+	}
+}//end Color Algo
+
 
 void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color)
 {
@@ -1049,7 +1054,9 @@ void ColorAlgo3DDefault(
 	Inflection upperBoundInflection;
 	int indexOfLowerBound = 0;
 	float lowerBoundTime = 0;
+	float upperBoundTime = 0;
 	bool intervalFound = false;
+	float timeRunningAsSeconds = timeRunning / 1000;
 	std::set<Inflection>::iterator itrLow = inflectionPoints.begin();
 	std::set<Inflection>::iterator itrHigh = inflectionPoints.begin();
 
@@ -1063,37 +1070,56 @@ void ColorAlgo3DDefault(
 
 		if (itrHigh != inflectionPoints.end()) {
 			upperBoundInflection = *itrHigh;
+			upperBoundTime = upperBoundInflection.getTime();
 		} 
 		else {
 			upperBoundInflection = lowerBoundInflection;
+			upperBoundTime = repeatSecs;
 		}
 		
-		if (upperBoundInflection.getTime() > timeRunning)
+		if (upperBoundTime > timeRunningAsSeconds)
 		{
 			lowerBoundTime = lowerBoundInflection.getTime();
 			intervalFound = true;
+			DebugLog("/start", "Upper Is Greater! Lower = " + std::to_string(indexOfLowerBound));
+			DebugLog("timeRunning: " + std::to_string(timeRunningAsSeconds));
+			DebugLog("lowerBoundTime: " + std::to_string(lowerBoundTime));
+			DebugLog("upperBoundTime: " + std::to_string(upperBoundTime));
+			DebugLog("indexOfLowerBound % 2 = " + std::to_string(indexOfLowerBound % 2));
+			DebugLog("/end");
+			if (indexOfLowerBound == 1)
+			{
+				indexOfLowerBound = 1;
+			}
 			break;
 		}
+
+		DebugLog("/start", "Interval " + std::to_string(indexOfLowerBound));
+		DebugLog("timeRunning: " + std::to_string(timeRunningAsSeconds));
+		DebugLog("lowerBoundTime: " + std::to_string(lowerBoundTime));
+		DebugLog("upperBoundTime: " + std::to_string(upperBoundInflection.getTime()));
+		DebugLog("indexOfLowerBound % 2 = " + std::to_string(indexOfLowerBound % 2));
+		DebugLog("/end");
 	}
 
 	//if the lower bound of the segment (inflectionPoints[i]) is even draw front, if odd draw back
-	bool index0 = true, index1 = true, index2 = true, index3 = true, index4 = true;
-	if (indexOfLowerBound == 0 && index0) {
-		index0 = false;
-		DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
-	}
-	if (indexOfLowerBound == 1 && index1) {
-		index1 = false;
-		DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
-	}
-	if (indexOfLowerBound == 2 && index2) {
-		index2 = false;
-		DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
-	}
-	if (indexOfLowerBound == 3 && index3) {
-		index3 = false;
-		DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
-	}
+	//bool index0 = true, index1 = true, index2 = true, index3 = true, index4 = true;
+	//if (indexOfLowerBound == 0 && index0) {
+	//	index0 = false;
+	//	DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
+	//}
+	//if (indexOfLowerBound == 1 && index1) {
+	//	index1 = false;
+	//	DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
+	//}
+	//if (indexOfLowerBound == 2 && index2) {
+	//	index2 = false;
+	//	DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
+	//}
+	//if (indexOfLowerBound == 3 && index3) {
+	//	index3 = false;
+	//	DebugLog("indexOfLowerBound = " + std::to_string(indexOfLowerBound));
+	//}
 
 
 	if (indexOfLowerBound % 2 == 0)
