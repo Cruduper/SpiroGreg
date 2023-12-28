@@ -18,11 +18,7 @@ using std::endl;
 #define PI 3.14159265359
 //3.141592653589793
 
-bool isDebugLogOn = false;
-
-
-
-void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo, bool& is3DGraph);
+void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
 bool AskUserToRepeat();
 void ShowPauseScreen(float timeAtPause, std::vector<Arm>& arms);
 void GetInflectionPointsSimple(float armSpeed0, float armSpeed1, float secsToRepeat, std::set<Inflection>& inflectionPoints);
@@ -92,7 +88,7 @@ void main()
 
 
 	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "SpiroGreg");
-	GetUserInput(arms, numArms, colorAlgo, is3DGraph);
+	GetUserInput(arms, numArms, colorAlgo);
 	if (arms[0].getAngularV_Rad() > arms[1].getAngularV_Rad()) {
 		armA = arms[0].getAngularV_Rad();
 		armB = arms[1].getAngularV_Rad();
@@ -300,7 +296,7 @@ void main()
 
 /******************************* FUNCTIONS ***********************************/
 
-void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo, bool& is3DGraph)
+void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 {
 	Arm* tempArm;
 	bool isValid = false;
@@ -329,11 +325,9 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo, 
 
 	if (isDebugGraph)
 	{
-		is3DGraph = false;
 		numArms = 2;
-		arms.push_back(*(new Arm(200, 950))); //45
-		arms.push_back(*(new Arm(150, 125)));  //269
-		arms.push_back(*(new Arm(29, 38)));
+		arms.push_back(*(new Arm(200, 45))); //45
+		arms.push_back(*(new Arm(69, 169)));  //269
 		colorAlgo = "Fire Gradient";
 
 	}
@@ -882,16 +876,14 @@ std::string VectorFloatToString(std::vector<float> vec)
 
 void DebugLog(std::string input, std::string titleText)
 {
-	if (isDebugLogOn) {
-		if (input.compare("/start") == 0) {
-			cout << endl << "*************** " + titleText + " ***************" << endl << endl;
-		}
-		else if (input.compare("/end") == 0) {
-			cout << endl << endl << "*****************************************" << endl;
-		}
-		else {
-			cout << input << endl;
-		}
+	if (input.compare("/start") == 0) {
+		cout << endl << "*************** " + titleText + " ***************" << endl << endl;
+	}
+	else if (input.compare("/end") == 0) {
+		cout << endl << endl << "*****************************************" << endl;
+	}
+	else {
+		cout << input << endl;
 	}
 }
 
