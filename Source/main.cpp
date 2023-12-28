@@ -44,14 +44,14 @@ float DegToRad(float deg);
 std::string VectorFloatToString(std::vector<float> vec);
 void DebugLog(std::string input, std::string = "Debug Log");
 void setColorAlgo(std::string& colorAlgo);
-void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, std::vector<sf::Vertex> &graph3DFront, std::vector<sf::Vertex> &graph3DBack, sf::Vector2f graphPosition, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph, bool& is3DFront);
+void ColorAlgorithmHandler(std::vector<sf::Vertex> &graph, sf::Vertex& newPixel, sf::Vector2f graphPosition, std::string algoName, float timeRunning, float repeatSecs, std::set<Inflection> &inflectionPoints, bool is3DGraph, bool& is3DFront);
 void ColorAlgoSolid(std::vector<sf::Vertex> &graph, sf::Color color);
 void ColorAlgoFireGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
 void ColorAlgoFuschiaGradient(std::vector<sf::Vertex> &graph, float repeatSecs, int percentComplete);
 void ColorAlgoRainbowGradient(std::vector<sf::Vertex> &graph, float repeatSecs);
 void ColorAlgoRainbowDiscrete(std::vector<sf::Vertex> &graph, float repeatSecs);
 void ColorAlgoConfetti(std::vector<sf::Vertex> &graph);
-void ColorAlgo3DDefault(std::vector<sf::Vertex>& graph3DFront, std::vector<sf::Vertex>& graph3DBack, bool& is3DFront, const std::set<Inflection>& inflectionPoints, sf::Vector2f graphPosition, float repeatSecs, float timeRunning, int percentComplete);
+void ColorAlgo3DDefault(sf::Vertex& newPixel, bool& is3DFront, const std::set<Inflection>& inflectionPoints, sf::Vector2f graphPosition, float repeatSecs, float timeRunning, int percentComplete);
 
 
 
@@ -65,7 +65,14 @@ void main()
 	std::string colorAlgo = "White";
 	std::vector<Arm> arms;	//# rotating arms that make up graph
 	std::vector<float> armSpeeds;
-	std::vector<sf::Vertex> graph, graph3DFront, graph3DBack;
+	std::vector<sf::Vertex> graph;
+	std::vector<sf::Vertex> graph3DFront, graph3DBack;
+	std::vector<std::vector<sf::Vertex>> graph3DFront2, graph3DBack2;
+
+	std::vector<sf::Vertex> newVec; 		//! make these lines into 	Initialize3DGraph();
+	graph3DFront2.push_back(newVec);		//! make these lines into 	Initialize3DGraph();
+	graph3DBack2.push_back(newVec);			//! make these lines into 	Initialize3DGraph();
+
 	std::set<Inflection> inflectionPoints;
 	sf::Clock clock, refreshClock;
 	sf::Time timeRunning, refreshTime;
@@ -157,7 +164,31 @@ void main()
 				if (!is3DGraph) {
 					graph.push_back(sf::Vertex(sf::Vector2f(armLines[numArms].position)));	//creates new vertices (to be colored)
 				}
-				ColorAlgorithmHandler(graph, graph3DFront, graph3DBack, sf::Vector2f(armLines[numArms].position), colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph, is3DFront);
+				sf::Vertex newPixel = sf::Vertex(sf::Vector2f(armLines[numArms].position));
+				bool inflectionSwitch = is3DFront;
+				ColorAlgorithmHandler(graph, newPixel, sf::Vector2f(armLines[numArms].position), colorAlgo, timeRunning.asMilliseconds(), secsToRepeat, inflectionPoints, is3DGraph, is3DFront);
+				if (is3DGraph)
+				{
+					if (inflectionSwitch != is3DFront) {
+
+						std::vector<sf::Vertex> newVec;
+
+						if (is3DFront) {
+							graph3DFront2.push_back(newVec);
+						}
+						else {
+							graph3DBack2.push_back(newVec);
+						}
+					}
+
+					if (is3DFront) {
+						graph3DFront2.back().push_back(newPixel);
+					} 
+					else {
+						graph3DBack2.back().push_back(newPixel);
+					}
+				}
+				
 				//int iRand = (rand() % 230) + 1;
 				//PauseForXMilliseconds(clock, iRand);
 				refreshClock.restart();
@@ -174,16 +205,44 @@ void main()
 			}
 			else
 			{
-				if (is3DFront)
-				{
-					if (graph3DFront.size())
-						window.draw(&graph3DFront[0], graph3DFront.size(), sf::LinesStrip);
-				}
-				else
-				{
-					if (graph3DBack.size())
-						window.draw(&graph3DBack[0], graph3DBack.size(), sf::LinesStrip);
-				}
+				//draw 3D graph algorithm
+				
+				//1. switch between 
+
+
+
+
+				//if (is3DFront)
+				//{
+					if (graph3DBack2.size())
+					{ 
+						//for (float num : vec)
+						for (std::vector<sf::Vertex> vertexVector : graph3DBack2) {
+							if (vertexVector.size())
+							{
+								window.draw(&vertexVector[0], vertexVector.size(), sf::LinesStrip);
+							}
+						}
+
+					}
+					if (graph3DFront2.size())
+					{
+						for (std::vector<sf::Vertex> vertexVector : graph3DFront2) {
+							if (vertexVector.size())
+							{
+								window.draw(&vertexVector[0], vertexVector.size(), sf::LinesStrip);
+							}
+						}
+					}
+						
+					//if (graph3DFront.size())
+					//	window.draw(&graph3DFront[0], graph3DFront.size(), sf::LinesStrip);
+				//}
+				//else
+				//{
+				//	if (graph3DBack.size())
+				//		window.draw(&graph3DBack[0], graph3DBack.size(), sf::LinesStrip);
+				//}
 			}
 
 			if (showArmLines)
@@ -214,8 +273,8 @@ void main()
 					timeRunning = sf::Time::Zero;
 					if (is3DGraph)
 					{
-						graph3DFront.resize(0);
-						graph3DBack.resize(0);
+						graph3DFront2.resize(0);
+						graph3DBack2.resize(0);
 					}
 					else {
 						graph.resize(0);
@@ -267,8 +326,8 @@ void GetUserInput(std::vector<Arm> &arms, int &numArms, std::string &colorAlgo)
 	if (isDebugGraph)
 	{
 		numArms = 2;
-		arms.push_back(*(new Arm(200, 100))); //45
-		arms.push_back(*(new Arm(69, 250)));  //269
+		arms.push_back(*(new Arm(200, 45))); //45
+		arms.push_back(*(new Arm(69, 169)));  //269
 		colorAlgo = "Fire Gradient";
 
 	}
@@ -839,8 +898,7 @@ void DebugLog(std::string input, std::string titleText)
 		//! run only once for solid colors
 void ColorAlgorithmHandler(
 	std::vector<sf::Vertex>& graph,
-	std::vector<sf::Vertex>& graph3DFront,
-	std::vector<sf::Vertex>& graph3DBack,
+	sf::Vertex& newPixel,
 	sf::Vector2f graphPosition,
 	std::string algoName,
 	float timeRunning,
@@ -853,7 +911,7 @@ void ColorAlgorithmHandler(
 
 	if (is3Dgraph)
 	{
-		ColorAlgo3DDefault(graph3DFront, graph3DBack, is3DFront, inflectionPoints, graphPosition, repeatSecs, timeRunning, percentComplete);
+		ColorAlgo3DDefault(newPixel, is3DFront, inflectionPoints, graphPosition, repeatSecs, timeRunning, percentComplete);
 		return;
 	}
 
@@ -1051,8 +1109,7 @@ void ColorAlgoConfetti(std::vector<sf::Vertex> &graph)
 }
 
 void ColorAlgo3DDefault(
-		std::vector<sf::Vertex> &graph3DFront, 
-		std::vector<sf::Vertex> &graph3DBack, 
+		sf::Vertex& newPixel,
 		bool& is3DFront,
 		const std::set<Inflection> &inflectionPoints, 
 		sf::Vector2f graphPosition,
@@ -1135,26 +1192,18 @@ void ColorAlgo3DDefault(
 
 	if (indexOfLowerBound % 2 == 0)
 	{
-		is3DFront = true;
-
-		if (graph3DFront.size() == 0)
-		{
-			graph3DFront.push_back(sf::Vertex(graphPosition));
+		if (!is3DFront) {
+			is3DFront = true;
 		}
 
-		graph3DFront.push_back(sf::Vertex(graphPosition));
-		graph3DFront[graph3DFront.size() - 1].color = sf::Color::Red;
+		newPixel.color = sf::Color::Red;
 	}
 	else 
 	{
-		is3DFront = false;
-
-		if (graph3DBack.size() == 0)
-		{
-			graph3DBack.push_back(sf::Vertex(graphPosition));
+		if (is3DFront) {
+			is3DFront = false;
 		}
 
-		graph3DBack.push_back(sf::Vertex(graphPosition));
-		graph3DBack[graph3DBack.size() - 1].color = sf::Color::Green;
+		newPixel.color = sf::Color::Blue;
 	}
 }
