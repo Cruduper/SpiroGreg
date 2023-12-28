@@ -18,6 +18,9 @@ using std::endl;
 #define PI 3.14159265359
 //3.141592653589793
 
+bool isDebugLogOn = false;
+
+
 void GetUserInput(std::vector<Arm> &Arms, int &numArms, std::string &colorAlgo);
 bool AskUserToRepeat();
 void ShowPauseScreen(float timeAtPause, std::vector<Arm>& arms);
@@ -876,14 +879,17 @@ std::string VectorFloatToString(std::vector<float> vec)
 
 void DebugLog(std::string input, std::string titleText)
 {
-	if (input.compare("/start") == 0) {
-		cout << endl << "*************** " + titleText + " ***************" << endl << endl;
-	}
-	else if (input.compare("/end") == 0) {
-		cout << endl << endl << "*****************************************" << endl;
-	}
-	else {
-		cout << input << endl;
+	if (isDebugLogOn)
+	{
+		if (input.compare("/start") == 0) {
+			cout << endl << "*************** " + titleText + " ***************" << endl << endl;
+		}
+		else if (input.compare("/end") == 0) {
+			cout << endl << endl << "*****************************************" << endl;
+		}
+		else {
+			cout << input << endl;
+		}
 	}
 }
 
