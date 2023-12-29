@@ -1,8 +1,7 @@
-//Header -- function declarations
 #include <SFML/Graphics.hpp>
 #include <string>
 
-#ifndef INFLECTION_H_INCLUDED //https://stackoverflow.com/questions/3799478/c-ifndef-for-include-files-why-is-all-caps-used-for-the-header-file
+#ifndef INFLECTION_H_INCLUDED 
 #define INFLECTION_H_INCLUDED
 
 class Inflection {
