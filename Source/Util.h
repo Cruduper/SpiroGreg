@@ -21,7 +21,7 @@ class Util {
 		static void PauseForXMilliseconds(sf::Clock& clock, int x);
 		static float DegToRad(float deg);
 		static std::string VectorFloatToString(std::vector<float> vec);
-		static void DebugLog(std::string input, std::string titleText);
+		static void DebugLog(std::string input, std::string titleText = "Debug Log");
 	//private:
 };
 
