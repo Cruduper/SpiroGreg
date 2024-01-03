@@ -51,9 +51,6 @@ void main()
 	sf::RenderWindow window;
 	Graph* graph;
 	sf::Color bgColor(0,0,0);
-
-
-
 	sf::Clock clock, refreshClock;
 	sf::Time refreshTime;
 	int screenshotNum = 1;
@@ -62,15 +59,11 @@ void main()
 	bool takeScreenShot = false;
 	bool is3DFront = true;
 	bool isPaused = false;
-
-
-
+	std::vector<Arm> tempArmVector;
+	std::string colorAlgo = "White";
 
 
 	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "SpiroGreg");
-	
-	std::vector<Arm> tempArmVector;
-	std::string colorAlgo = "White";
 
 	bool isDebugGraph = AskAboutDebugInputs();
 	if (isDebugGraph)
@@ -148,10 +141,9 @@ void main()
 					takeScreenShot = true;
 				}
 				break;
-			}//end switch
-		}//end Event Loop
-
-
+			}
+		}
+		//end Event Loop
 
 
 
@@ -176,14 +168,15 @@ void main()
 					Add3DPixel(graph3DFront, graph3DBack, is3DFront, newPixel);
 				}
 				
-				//int iRand = (rand() % 230) + 1;
-				//PauseForXMilliseconds(clock, iRand);
+				//! future: implement 'chaotic' anti-smooth graph drawing functionality here
+				//! with code similar to this. Does this code affect color algorithm?
+				//		int iRand = (rand() % 230) + 1;
+				//		PauseForXMilliseconds(clock, iRand);
 				refreshClock.restart();
 			}
 			else {
 				showArmLines = false;
 			}
-
 
 			if (isGraph3D == false)
 			{
@@ -194,7 +187,6 @@ void main()
 			{
 				if (graph3DBack.size())
 				{ 
-					//for (float num : vec)
 					for (std::vector<sf::Vertex> vertexVector : graph3DBack) {
 						if (vertexVector.size())
 						{
@@ -249,8 +241,8 @@ void main()
 
 			clock.restart();
 		}
+		//end frame update loop
 	}
-
 }
 
 
