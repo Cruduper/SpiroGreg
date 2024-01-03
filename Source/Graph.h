@@ -15,13 +15,27 @@ using namespace std;
 
 class Graph {
 	public:
-		Graph(vector<Arm>& armsArg, set<Inflection>& inflectionPtsArg);
+		Graph(vector<Arm>& armsArg, bool is3DGraphArg = true);
 		~Graph();
-	private:
-		vector<sf::Vertex> graph;
-		vector<vector<sf::Vertex>> graph3DFront2, graph3DBack2;
-
+		void Initialize2DGraph();
+		void Initialize3DGraph();
+		vector<sf::Vertex> graph2D;
+		vector<vector<sf::Vertex>> graph3DFront, graph3DBack;
 		vector<Arm> arms;	//# rotating arms that make up graph
+
+			//accessors
+		bool GetIs3DGraph();
+		vector<Arm>& GetArms();
+		int GetNumArms(); //! TODO make this const or somehow immutable
+		float GetSecsToRepeat();
+		sf::Time GetTimeRunning();
+		float GetTimeRunningAsSeconds();
+		set<Inflection> GetInflectionPoints();
+		void ResetGraphs();
+		void ResetTimeRunning();
+
+
+	private:
 		sf::VertexArray armLines;
 		int numArms; //why not use arms.size() after initialization???
 		bool armsVisible = true;
@@ -29,7 +43,8 @@ class Graph {
 		set<Inflection> inflectionPoints;
 		sf::Time timeRunning;
 		float secsToRepeat;		//seconds it takes to draw entire spirograph pattern
-		bool is3DGraph = true; //! developer debug variable (for now)
+		bool isGraph3D = true; //! developer debug variable (for now)
+
 
 		void FindInflectionPoints();
 		void FindMatchesFromLists(vector<float> listA, vector<float> listB, string matchType);
