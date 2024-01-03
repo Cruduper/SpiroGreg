@@ -13,9 +13,9 @@ Arm::Arm()
 
 Arm::Arm(float rad, float spd)
 {
-	setRadius(rad);
-	setAngularV_Rad(spd);
-	setAngularV_Deg(spd);
+	SetRadius(rad);
+	SetAngularV_Rad(spd);
+	SetAngularV_Deg(spd);
 }
 
 Arm::~Arm()
@@ -23,32 +23,32 @@ Arm::~Arm()
 
 }
 
-float Arm::getRadius()
+float Arm::GetRadius()
 {
 	return radius;
 }
 
-float Arm::getAngularV_Rad()
+float Arm::GetAngularV_Rad()
 {
 	return angVelocRad;
 }
 
-float Arm::getAngularV_Deg()
+float Arm::GetAngularV_Deg()
 {
 	return angVelocDeg;
 }
 
-void Arm::setRadius(float rad)
+void Arm::SetRadius(float rad)
 {
 	radius = rad;
 }
 
-void Arm::setAngularV_Rad(float spd)
+void Arm::SetAngularV_Rad(float spd)
 {
 	angVelocRad = spd * ((2.0f * PI) / 360);
 }
 
-void Arm::setAngularV_Deg(float spd)
+void Arm::SetAngularV_Deg(float spd)
 {
 	angVelocDeg = spd;
 }

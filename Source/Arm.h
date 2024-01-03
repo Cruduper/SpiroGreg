@@ -10,12 +10,12 @@ class Arm{
 		Arm();
 		Arm(float rad, float spd);
 		~Arm();
-		float getRadius();
-		float getAngularV_Rad();
-		float getAngularV_Deg();
-		void setRadius(float rad);
-		void setAngularV_Rad(float spd);
-		void setAngularV_Deg(float spd);
+		float GetRadius();
+		float GetAngularV_Rad();
+		float GetAngularV_Deg();
+		void SetRadius(float rad);
+		void SetAngularV_Rad(float spd);
+		void SetAngularV_Deg(float spd);
 
 	private:
 		float radius;
