@@ -67,7 +67,7 @@ void ColorManager::ColorAlgorithmHandler(
 
 
 		//placeholder til you can design a pop-up menu for user to choose color
-void ColorManager::SetColorAlgo(std::string& colorAlgo)
+void ColorManager::CycleColorAlgo(std::string& colorAlgo)
 {
 	if (colorAlgo == "White")
 		colorAlgo = "Fire Gradient";

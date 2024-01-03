@@ -24,7 +24,7 @@ class ColorManager {
 			bool& is3DFront
 		);
 				//placeholder til you can design a pop-up menu for user to choose color
-		void SetColorAlgo(std::string& colorAlgo);
+		void CycleColorAlgo(std::string& colorAlgo);
 
 
 	
